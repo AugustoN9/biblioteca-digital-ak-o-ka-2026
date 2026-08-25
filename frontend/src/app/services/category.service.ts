@@ -8,7 +8,8 @@ import { Category, CategorySummary, Subcategory, Book, SearchBookResult } from '
 })
 export class CategoryService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api/categories';
+  //private apiUrl = 'http://localhost:3000/api/categories';
+  private apiUrl = 'https://biblioteca-digital-ak-o-ka-2026.onrender.com/api/categories';
 
   getCategories(): Observable<CategorySummary[]> {
     return this.http.get<CategorySummary[]>(this.apiUrl);

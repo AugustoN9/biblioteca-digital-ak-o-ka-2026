@@ -9,7 +9,8 @@ import { Observable, tap } from 'rxjs';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private apiUrl = 'http://localhost:3000/api/auth';
+  //private apiUrl = 'http://localhost:3000/api/auth';
+  private apiUrl = 'https://biblioteca-digital-ak-o-ka-2026.onrender.com/api/auth';
 
   isLoggedIn = signal<boolean>(!!localStorage.getItem('admin_token'));
 
