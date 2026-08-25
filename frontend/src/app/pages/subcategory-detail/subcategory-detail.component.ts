@@ -1,5 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CategoryService } from '../../services/category.service';
 import { Category, Subcategory, Book } from '../../models/category.model';
@@ -8,7 +9,7 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
 @Component({
   selector: 'app-subcategory-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, SafeUrlPipe],
+  imports: [CommonModule, FormsModule, RouterLink, SafeUrlPipe],
   template: `
     <div class="container py-4" *ngIf="category() as cat">
       <!-- Breadcrumb -->
@@ -36,16 +37,37 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
         <i [class]="'bi ' + cat.iconClass + ' position-absolute text-white watermark-header'"></i>
       </div>
 
+      <!-- Barra de Busca Responsiva (Mobile & Desktop) -->
+      <div class="search-container mb-4">
+        <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border">
+          <span class="input-group-text bg-white border-0 ps-3 pe-2 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-0 ps-2"
+            placeholder="Buscar por título, autor ou assunto nesta categoria..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+          />
+          @if (searchQuery()) {
+            <button class="btn btn-white bg-white border-0 pe-3 text-muted" type="button" (click)="searchQuery.set('')">
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
+          }
+        </div>
+      </div>
+
       <p class="lead text-secondary fs-6 mb-4">
         {{ subcategory()?.description || 'Clique sobre a capa do livro para ver detalhes, ler online ou fazer o download.' }}
       </p>
 
       <!-- Vitrine de Livros da Subcategoria -->
-      @if (subcategory()?.books && subcategory()!.books.length > 0) {
-        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 mb-5">
-          @for (book of subcategory()!.books; track book.id) {
+      @if (filteredMainBooks().length > 0) {
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 g-md-4 mb-5">
+          @for (book of filteredMainBooks(); track book.id) {
             <div class="col">
-              <div class="book-cover-card" (click)="openBookDetails(book)">
+              <div class="book-cover-card h-100 position-relative rounded-3 overflow-hidden shadow-sm" (click)="openBookDetails(book)">
                 
                 <!-- Botão de Favorito Rápido -->
                 <button class="like-badge-btn" (click)="onLike($event, book)">
@@ -54,17 +76,17 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
 
                 <!-- Capa com Imagem Real -->
                 @if (book.coverUrl) {
-                  <img [src]="book.coverUrl" [alt]="book.title" class="book-cover-img">
-                  <div class="book-overlay">
-                    <h6 class="fw-bold m-0 text-truncate">{{ book.title }}</h6>
+                  <img [src]="book.coverUrl" [alt]="book.title" class="book-cover-img w-100 h-100 object-fit-cover">
+                  <div class="book-overlay p-2">
+                    <h6 class="fw-bold m-0 text-truncate small">{{ book.title }}</h6>
                     <small class="opacity-75 text-truncate d-block">{{ book.author }}</small>
                   </div>
                 } @else {
                   <!-- Capa Padrão Estilizada -->
-                  <div class="book-default-cover" [style.background]="cat.gradientBackground">
+                  <div class="book-default-cover p-3 d-flex flex-column justify-content-between h-100 text-white" [style.background]="cat.gradientBackground">
                     <div>
                       <span class="badge bg-danger mb-2">PDF</span>
-                      <h6 class="fw-bold mb-1 line-clamp-3">{{ book.title }}</h6>
+                      <h6 class="fw-bold mb-1 line-clamp-3 small">{{ book.title }}</h6>
                     </div>
                     <div>
                       <hr class="border-white opacity-50 my-2">
@@ -79,58 +101,59 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
       }
 
       <!-- Vitrine de Subtópicos com 3º nível -->
-      @if (subcategory()?.subcategories && subcategory()!.subcategories!.length > 0) {
-        @for (child of subcategory()!.subcategories; track child.id) {
+      @if (filteredChildSubcategories().length > 0) {
+        @for (child of filteredChildSubcategories(); track child.id) {
           <div class="mb-5">
             <h4 class="fw-bold text-dark border-bottom pb-2 mb-3">
               <i class="bi bi-tag-fill text-primary fs-6 me-2"></i>{{ child.name }}
             </h4>
-            @if (child.books.length > 0) {
-              <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
-                @for (book of child.books; track book.id) {
-                  <div class="col">
-                    <div class="book-cover-card" (click)="openBookDetails(book)">
-                      <button class="like-badge-btn" (click)="onLike($event, book)">
-                        <i class="bi bi-heart-fill text-danger me-1"></i> {{ book.likes || 0 }}
-                      </button>
-                      @if (book.coverUrl) {
-                        <img [src]="book.coverUrl" [alt]="book.title" class="book-cover-img">
-                        <div class="book-overlay">
-                          <h6 class="fw-bold m-0 text-truncate">{{ book.title }}</h6>
-                          <small class="opacity-75 text-truncate d-block">{{ book.author }}</small>
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 g-md-4">
+              @for (book of child.books; track book.id) {
+                <div class="col">
+                  <div class="book-cover-card h-100 position-relative rounded-3 overflow-hidden shadow-sm" (click)="openBookDetails(book)">
+                    <button class="like-badge-btn" (click)="onLike($event, book)">
+                      <i class="bi bi-heart-fill text-danger me-1"></i> {{ book.likes || 0 }}
+                    </button>
+                    @if (book.coverUrl) {
+                      <img [src]="book.coverUrl" [alt]="book.title" class="book-cover-img w-100 h-100 object-fit-cover">
+                      <div class="book-overlay p-2">
+                        <h6 class="fw-bold m-0 text-truncate small">{{ book.title }}</h6>
+                        <small class="opacity-75 text-truncate d-block">{{ book.author }}</small>
+                      </div>
+                    } @else {
+                      <div class="book-default-cover p-3 d-flex flex-column justify-content-between h-100 text-white" [style.background]="cat.gradientBackground">
+                        <div>
+                          <span class="badge bg-danger mb-2">PDF</span>
+                          <h6 class="fw-bold mb-1 line-clamp-3 small">{{ book.title }}</h6>
                         </div>
-                      } @else {
-                        <div class="book-default-cover" [style.background]="cat.gradientBackground">
-                          <div>
-                            <span class="badge bg-danger mb-2">PDF</span>
-                            <h6 class="fw-bold mb-1 line-clamp-3">{{ book.title }}</h6>
-                          </div>
-                          <div>
-                            <hr class="border-white opacity-50 my-2">
-                            <small class="opacity-75 d-block text-truncate">{{ book.author }}</small>
-                          </div>
+                        <div>
+                          <hr class="border-white opacity-50 my-2">
+                          <small class="opacity-75 d-block text-truncate">{{ book.author }}</small>
                         </div>
-                      }
-                    </div>
+                      </div>
+                    }
                   </div>
-                }
-              </div>
-            } @else {
-              <p class="text-muted small">Nenhum livro cadastrado em {{ child.name }} ainda.</p>
-            }
+                </div>
+              }
+            </div>
           </div>
         }
       }
 
-      @if (subcategory()?.books?.length === 0 && (!subcategory()?.subcategories || subcategory()!.subcategories!.length === 0)) {
-        <div class="alert alert-light border text-center py-5">
+      <!-- Alerta quando a busca não encontra livros ou lista vazia -->
+      @if (filteredMainBooks().length === 0 && filteredChildSubcategories().length === 0) {
+        <div class="alert alert-light border text-center py-5 rounded-4 shadow-sm">
           <i class="bi bi-journal-x fs-1 text-muted d-block mb-2"></i>
-          <p class="text-muted m-0">Nenhum livro cadastrado neste subtópico ainda.</p>
+          @if (searchQuery()) {
+            <p class="text-muted m-0">Nenhum livro encontrado para "<strong>{{ searchQuery() }}</strong>" nesta subcategoria.</p>
+          } @else {
+            <p class="text-muted m-0">Nenhum livro cadastrado neste subtópico ainda.</p>
+          }
         </div>
       }
     </div>
 
-    <!-- 1. Modal de Detalhes do Livro (Capa, Título, Autores, Resumo e Ações) -->
+    <!-- 1. Modal de Detalhes do Livro -->
     @if (detailBook()) {
       <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.65);">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -144,7 +167,6 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
             
             <div class="modal-body p-4">
               <div class="row g-4">
-                <!-- Coluna da Capa -->
                 <div class="col-md-4 text-center">
                   @if (detailBook()?.coverUrl) {
                     <img [src]="detailBook()?.coverUrl" class="img-fluid rounded-3 shadow" style="max-height: 280px; object-fit: cover;">
@@ -162,7 +184,6 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
                   </button>
                 </div>
 
-                <!-- Coluna das Informações -->
                 <div class="col-md-8 d-flex flex-column justify-content-between">
                   <div>
                     <h3 class="fw-bold text-dark mb-1">{{ detailBook()?.title }}</h3>
@@ -193,7 +214,7 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
       </div>
     }
 
-    <!-- 2. Modal do Leitor de PDF do Google Drive -->
+    <!-- 2. Modal do Leitor de PDF -->
     @if (selectedBook()) {
       <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.75); z-index: 1060;">
         <div class="modal-dialog modal-xl modal-dialog-centered" style="height: 92vh;">
@@ -223,9 +244,43 @@ export class SubcategoryDetailComponent implements OnInit {
 
   category = signal<Category | null>(null);
   subcategory = signal<Subcategory | null>(null);
+  searchQuery = signal<string>('');
 
   detailBook = signal<Book | null>(null);
   selectedBook = signal<Book | null>(null);
+
+  // Livros filtrados do nível principal da subcategoria
+  filteredMainBooks = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    const books = this.subcategory()?.books || [];
+    if (!query) return books;
+
+    return books.filter(b => 
+      b.title.toLowerCase().includes(query) ||
+      b.author.toLowerCase().includes(query) ||
+      b.description?.toLowerCase().includes(query) ||
+      b.keywords?.some(k => k.toLowerCase().includes(query))
+    );
+  });
+
+  // Subtópicos de 3º nível contendo apenas os livros correspondentes ao filtro
+  filteredChildSubcategories = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    const children = this.subcategory()?.subcategories || [];
+    if (!query) return children;
+
+    return children
+      .map(child => ({
+        ...child,
+        books: child.books.filter(b =>
+          b.title.toLowerCase().includes(query) ||
+          b.author.toLowerCase().includes(query) ||
+          b.description?.toLowerCase().includes(query) ||
+          b.keywords?.some(k => k.toLowerCase().includes(query))
+        )
+      }))
+      .filter(child => child.books.length > 0);
+  });
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -268,7 +323,7 @@ export class SubcategoryDetailComponent implements OnInit {
   }
 
   onLike(event: Event, book: Book) {
-    event.stopPropagation(); // Evita abrir o modal ao clicar no botão de like
+    event.stopPropagation();
     this.categoryService.likeBook(book.id).subscribe({
       next: (res) => {
         book.likes = res.likes;
