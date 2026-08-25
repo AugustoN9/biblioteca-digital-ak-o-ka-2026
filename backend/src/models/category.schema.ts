@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 // Schema do Livro
 const BookSchema = new Schema({
@@ -45,4 +45,6 @@ const CategorySchema = new Schema({
   timestamps: true
 });
 
-export const CategoryModel = model('Category', CategorySchema);
+export const Category = mongoose.model('Category', CategorySchema);
+export const CategoryModel = Category;
+export default Category;
