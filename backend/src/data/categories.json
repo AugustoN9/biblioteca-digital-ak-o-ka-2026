@@ -1,0 +1,478 @@
+[
+  {
+    "id": "biomedicina",
+    "slug": "biomedicina",
+    "name": "Biomedicina",
+    "description": "Acervo voltado para ciências biomédicas, análises clínicas e bases celulares da saúde.",
+    "iconClass": "bi-heart-pulse-fill",
+    "gradientBackground": "linear-gradient(135deg, #880e4f 0%, #311b92 100%)",
+    "subcategories": [
+      {
+        "id": "bio-anat",
+        "slug": "anatomia",
+        "name": "Anatomia",
+        "books": [
+          {
+            "id": "b1",
+            "title": "Livro de Demonstração - Anatomia",
+            "author": "Autor de Exemplo",
+            "description": "Material introdutório de teste integrado ao Google Drive.",
+            "driveFileId": "1TvaYJ3vUOOZkwVTUlhn4mzvAcv-h6zi9",
+            "pages": 150
+          }
+        ]
+      },
+      {
+        "id": "bio-hist",
+        "slug": "histologia",
+        "name": "Histologia",
+        "imageUrl": "assets/images/subcategory/histologia.png",
+        "books": []
+      },
+      {
+        "id": "bio-fisi",
+        "slug": "fisiologia",
+        "name": "Fisiologia",
+        "books": []
+      },
+      {
+        "id": "bio-gene",
+        "slug": "genetica",
+        "name": "Genética",
+        "books": []
+      },
+      {
+        "id": "bio-cel",
+        "slug": "biologia-celular",
+        "name": "Biologia Celular",
+        "imageUrl": "assets/images/subcategory/biologia-celular.jpg",
+        "books": []
+      },
+      {
+        "id": "bio-mol",
+        "slug": "biologia-molecular",
+        "name": "Biologia Molecular",
+        "imageUrl": "assets/images/subcategory/biologia-molecular.png",
+        "books": []
+      },
+      {
+        "id": "bio-quim",
+        "slug": "bioquimica",
+        "name": "Bioquímica",
+        "books": [
+          {
+            "id": "book_1787580711443",
+            "title": "Bioquímica Ilustrada de Harper",
+            "author": "Victor W. Rodwell ... [et al.] ; [tradução: Luís Fernando Marques Dorvillé, Maria Elisabete Costa Moreira, Simone Kobe de Oliveira ; revisão técnica: Guilhian Leipnitz]. – 30. ed. – Porto Alegre : AMGH, 2017.",
+            "description": "A Bioquímica Ilustrada de Harper (30ª edição) é uma obra de referência consagrada na área da saúde que conecta os fundamentos químicos celulares diretamente à prática médica e diagnóstica. O livro abrange de forma integrada a estrutura e a cinética de biomoléculas e enzimas, as vias metabólicas centrais de carboidratos, lipídios e proteínas, a biologia molecular da replicação e expressão gênica, bem como os mecanismos de sinalização hormonal e bioenergética.\n\nO principal diferencial desta edição é o foco clínico aprofundado, ilustrado por esquemas visuais detalhados que facilitam a compreensão de processos fisiológicos e patológicos complexos. Ao associar reações moleculares a condições reais — como diabetes, dislipidemias, erros inatos do metabolismo e oncogênese —, o texto consolida-se como um recurso didático essencial para estudantes e profissionais que buscam compreender a base molecular da fisiologia e das doenças humanas.",
+            "driveFileId": "1ZWlQD3F0bsn6hXDBtaa5ltiKhQENcoAv",
+            "pages": 832,
+            "coverUrl": "https://covers.vitalbook.com/vbid/9786558040033/width/480"
+          }
+        ]
+      },
+      {
+        "id": "bio-pato",
+        "slug": "patologia",
+        "name": "Patologia",
+        "books": []
+      },
+      {
+        "id": "bio-micr",
+        "slug": "microbiologia",
+        "name": "Microbiologia",
+        "books": [
+          {
+            "id": "book_1787582991925",
+            "title": "Microbiologia Médica de Mims",
+            "author": "Goering, Richard V.",
+            "description": "Com uma abordagem clinicamente relevante baseada em sistemas, numerosas ilustrações coloridas e dinâmicas, texto sucinto e caixas de principais conceitos, o livro torna este assunto complexo com fácil de entendimento e fixação. Desenvolva seu aprendizado e absorva informações complexas de uma maneira interativa e dinâmica com a Lista de Patógenos – um glossário sobre vírus, bactérias e fungos. Aprenda sobre as infecções no contexto dos principais sistemas corporais e entenda por que estes são ambientes nos quais os microrganismos podem se estabelecer, multiplicar e dar origem a alterações patológicas. Analise de forma eficaz os assuntos em cursos baseados em problemas com a ajuda da introdução dos capítulos e das caixas de texto “Lições em Microbiologia” que enfatizam a relevância clínica do material e oferecem fácil acesso aos principais conceitos através de ferramentas de revisão valiosas. Aprofunde seus conhecimentos sobre a epidemiologia e o importante papel que ela desempenha no fornecimento da identificação baseada em evidências dos principais fatores de risco de doença e dos alvos para a medicina preventiva.",
+            "driveFileId": "1GyGUaKK6htCHVOxwjFyDRMaINJX5MKC_",
+            "pages": 632,
+            "coverUrl": "https://pergamumweb.santamarcelina.edu.br/pergamumweb/vinculos/000031/0000319d.jpg",
+            "likes": 0
+          }
+        ]
+      },
+      {
+        "id": "bio-para",
+        "slug": "parasitologia",
+        "name": "Parasitologia",
+        "imageUrl": "assets/images/subcategory/parasitologia.png",
+        "books": []
+      },
+      {
+        "id": "bio-embr",
+        "slug": "embriologia",
+        "name": "Embriologia",
+        "books": []
+      },
+      {
+        "id": "bio-imun",
+        "slug": "imunologia",
+        "name": "Imunologia",
+        "books": []
+      },
+      {
+        "id": "bio-viro",
+        "slug": "virologia",
+        "name": "Virologia",
+        "books": []
+      }
+    ]
+  },
+  {
+    "id": "biotecnologia",
+    "slug": "biotecnologia",
+    "name": "Biotecnologia",
+    "description": "Aplicações industriais, agrícolas, médicas e farmacêuticas de processos biológicos.",
+    "iconClass": "bi-bezier2",
+    "gradientBackground": "linear-gradient(135deg, #1b5e20 0%, #004d40 100%)",
+    "subcategories": [
+      {
+        "id": "bt-ind",
+        "slug": "biotecnologia-industrial",
+        "name": "Biotecnologia Industrial (Produção alimentícia, queijos, iogurte, bebidas)",
+        "books": []
+      },
+      {
+        "id": "bt-farm",
+        "slug": "biotecnologia-farmaceutica",
+        "name": "Biotecnologia Farmacêutica (Cultura de tecidos animais e vegetais)",
+        "books": []
+      },
+      {
+        "id": "bt-agr",
+        "slug": "biotecnologia-agricola",
+        "name": "Biotecnologia Agrícola (Transgênicos, melhorias genéticas)",
+        "books": []
+      },
+      {
+        "id": "bt-med",
+        "slug": "biotecnologia-medica",
+        "name": "Biotecnologia Médica (Terapias gênicas, edição genética, vacinas)",
+        "books": []
+      },
+      {
+        "id": "bt-fito",
+        "slug": "fitoterapicos",
+        "name": "Fitoterápicos",
+        "books": []
+      }
+    ]
+  },
+  {
+    "id": "histotecnologia",
+    "slug": "histotecnologia",
+    "name": "Histotecnologia",
+    "description": "Processamento tecidual, métodos de coloração, imunohistoquímica e rotina laboratorial.",
+    "iconClass": "bi-droplet-half",
+    "gradientBackground": "linear-gradient(135deg, #b71c1c 0%, #4a148c 100%)",
+    "subcategories": [
+      {
+        "id": "ht-hq",
+        "slug": "histoquimica",
+        "name": "Histoquímica",
+        "books": []
+      },
+      {
+        "id": "ht-cq",
+        "slug": "citoquimica",
+        "name": "Citoquímica",
+        "books": []
+      },
+      {
+        "id": "ht-col",
+        "slug": "tecnicas-de-coloracao",
+        "name": "Técnicas e Metodologias de Coloração",
+        "books": []
+      },
+      {
+        "id": "ht-eqp",
+        "slug": "equipamentos-e-processos",
+        "name": "Equipamentos e Processos",
+        "books": []
+      },
+      {
+        "id": "histotecnologia-imuno-histoquimica",
+        "slug": "imuno-histoquimica",
+        "name": "Imuno-Histoquimica",
+        "description": "",
+        "books": []
+      }
+    ]
+  },
+  {
+    "id": "quimica",
+    "slug": "quimica",
+    "name": "Química",
+    "description": "Química geral, orgânica, inorgânica, físico-química e formulação de reagentes.",
+    "iconClass": "bi-radioactive",
+    "gradientBackground": "linear-gradient(135deg, #e65100 0%, #bf360c 100%)",
+    "subcategories": [
+      {
+        "id": "qm-inorg",
+        "slug": "quimica-inorganica",
+        "name": "Química Inorgânica",
+        "books": []
+      },
+      {
+        "id": "qm-org",
+        "slug": "quimica-organica",
+        "name": "Química Orgânica",
+        "books": []
+      },
+      {
+        "id": "qm-fq",
+        "slug": "fisicoquimica",
+        "name": "Físico-Química",
+        "books": []
+      },
+      {
+        "id": "qm-reag",
+        "slug": "reagentes-solucoes-reacoes",
+        "name": "Reagentes, Soluções e Reações",
+        "books": []
+      }
+    ]
+  },
+  {
+    "id": "tecnologia-da-informacao",
+    "slug": "tecnologia-da-informacao",
+    "name": "Tecnologia da Informação",
+    "description": "Desenvolvimento de software, linguagens de programação, arquitetura de sistemas e redes.",
+    "iconClass": "bi-code-slash",
+    "gradientBackground": "linear-gradient(135deg, #0d47a1 0%, #006064 100%)",
+    "subcategories": [
+      {
+        "id": "ti-log",
+        "slug": "algoritmos-e-logica",
+        "name": "Algoritmos e Lógica de Programação",
+        "books": []
+      },
+      {
+        "id": "ti-lang",
+        "slug": "linguagens-de-programacao",
+        "name": "Linguagens de Programação",
+        "books": [],
+        "subcategories": [
+          {
+            "id": "lang-c",
+            "slug": "linguagem-c",
+            "name": "Linguagem C",
+            "books": []
+          },
+          {
+            "id": "lang-cpp",
+            "slug": "linguagem-cpp",
+            "name": "Linguagem C++",
+            "books": []
+          },
+          {
+            "id": "lang-csharp",
+            "slug": "linguagem-csharp",
+            "name": "Linguagem C#",
+            "books": []
+          },
+          {
+            "id": "lang-java",
+            "slug": "linguagem-java",
+            "name": "Linguagem JAVA",
+            "books": [
+              {
+                "id": "book_1787598152388",
+                "title": "Conceitos de computação em Java",
+                "author": "Horstmann, Cay.",
+                "description": "",
+                "driveFileId": "1o7A7WEj7YHoA830B7tJujTEYgi8g89JU",
+                "pages": 711,
+                "keywords": [
+                  "java"
+                ],
+                "coverUrl": "https://m.media-amazon.com/images/I/81S+n+JF9eL._UF1000,1000_QL80_.jpg",
+                "likes": 3
+              }
+            ]
+          },
+          {
+            "id": "lang-py",
+            "slug": "linguagem-python",
+            "name": "Linguagem PYTHON",
+            "books": []
+          },
+          {
+            "id": "lang-js",
+            "slug": "linguagem-javascript",
+            "name": "Linguagem JAVASCRIPT",
+            "books": []
+          },
+          {
+            "id": "lang-ts",
+            "slug": "linguagem-typescript",
+            "name": "Linguagem TYPESCRIPT",
+            "books": []
+          }
+        ]
+      },
+      {
+        "id": "ti-web",
+        "slug": "tecnologias-web",
+        "name": "Tecnologias WEB",
+        "books": [],
+        "subcategories": [
+          {
+            "id": "web-html-css",
+            "slug": "html-css",
+            "name": "HTML e CSS",
+            "books": []
+          },
+          {
+            "id": "web-angular",
+            "slug": "angular",
+            "name": "Framework Angular",
+            "books": [
+              {
+                "id": "book_1787598678291",
+                "title": "PRO Angular",
+                "author": "Autor desconhecido",
+                "description": "",
+                "driveFileId": "1J6Pn1fTxCE-ulfi1sZFSCADq3G1XViKC",
+                "coverUrl": "https://m.media-amazon.com/images/I/61inDoflRUL._AC_UF350,350_QL50_.jpg",
+                "keywords": [
+                  "angular"
+                ],
+                "likes": 0
+              }
+            ]
+          },
+          {
+            "id": "web-bootstrap",
+            "slug": "bootstrap",
+            "name": "Framework Bootstrap",
+            "books": []
+          },
+          {
+            "id": "web-node",
+            "slug": "nodejs",
+            "name": "NODE.js",
+            "books": []
+          }
+        ]
+      },
+      {
+        "id": "ti-so",
+        "slug": "sistemas-operacionais",
+        "name": "Sistemas Operacionais",
+        "books": []
+      },
+      {
+        "id": "ti-redes",
+        "slug": "rede-de-computadores",
+        "name": "Rede de Computadores",
+        "books": []
+      },
+      {
+        "id": "ti-ed",
+        "slug": "estrutura-de-dados",
+        "name": "Estrutura de Dados",
+        "books": []
+      },
+      {
+        "id": "ti-teste",
+        "slug": "teste-de-software",
+        "name": "Teste de Software",
+        "books": []
+      },
+      {
+        "id": "ti-sec",
+        "slug": "ciberseguranca",
+        "name": "Cibersegurança",
+        "books": []
+      },
+      {
+        "id": "ti-proj",
+        "slug": "gestao-de-projetos",
+        "name": "Gestão de Projetos",
+        "books": []
+      },
+      {
+        "id": "ti-distrib",
+        "slug": "sistemas-distribuidos",
+        "name": "Sistemas Distribuídos",
+        "books": []
+      }
+    ]
+  },
+  {
+    "id": "engenharias",
+    "slug": "engenharias",
+    "name": "Engenharias",
+    "description": "Bases de cálculo matemático e física para engenharia e computação.",
+    "iconClass": "bi-calculator-fill",
+    "gradientBackground": "linear-gradient(135deg, #263238 0%, #37474f 100%)",
+    "subcategories": [
+      {
+        "id": "eng-precalc",
+        "slug": "pre-calculo",
+        "name": "Pré-Cálculo",
+        "books": []
+      },
+      {
+        "id": "eng-calc1",
+        "slug": "calculo-1",
+        "name": "Cálculo 1",
+        "books": []
+      },
+      {
+        "id": "eng-calc2",
+        "slug": "calculo-2",
+        "name": "Cálculo 2",
+        "books": []
+      }
+    ]
+  },
+  {
+    "id": "saude-publica-e-bioestatistica",
+    "slug": "saude-publica-e-bioestatistica",
+    "name": "Saúde Pública e Bioestatística",
+    "description": "Estudos epidemiológicos, métodos estatísticos e análise de dados aplicados à saúde.",
+    "iconClass": "bi-bar-chart-line-fill",
+    "gradientBackground": "linear-gradient(135deg, #004d40 0%, #00695c 100%)",
+    "subcategories": [
+      {
+        "id": "sp-epi",
+        "slug": "epidemiologia",
+        "name": "Epidemiologia",
+        "books": []
+      },
+      {
+        "id": "sp-est",
+        "slug": "estatistica-aplicada-a-saude",
+        "name": "Estatística Aplicada à Saúde",
+        "books": []
+      }
+    ]
+  },
+  {
+    "id": "informatica-biomedica",
+    "slug": "informatica-biomedica",
+    "name": "Informática Biomédica",
+    "description": "Integração entre sistemas de informação em saúde, padrões clínicos e bioinformática.",
+    "iconClass": "bi-cpu-fill",
+    "gradientBackground": "linear-gradient(135deg, #4a148c 0%, #1a237e 100%)",
+    "subcategories": [
+      {
+        "id": "ib-interop",
+        "slug": "interoperabilidade-padroes-comunicacao",
+        "name": "Interoperabilidade, Padrões e Comunicação",
+        "books": []
+      },
+      {
+        "id": "ib-bioinf",
+        "slug": "introducao-a-bioinformatica",
+        "name": "Introdução à Bioinformática",
+        "books": []
+      }
+    ]
+  }
+]
