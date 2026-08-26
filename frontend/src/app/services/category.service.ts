@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Category, Subcategory, Book, SearchBookResult } from '../models/category.model';
+import { map } from 'rxjs/operators';
+import { Category, CategorySummary, Subcategory, Book, SearchBookResult } from '../models/category.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,12 +20,25 @@ export class CategoryService {
     });
   }
 
-  // Retorna a lista completa com subcategorias e livros
-  getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(this.apiUrl);
+  // Utilizado na Home: mapeia Category[] para CategorySummary[] preenchendo subcategoriesCount
+  getCategories(): Observable<CategorySummary[]> {
+    return this.http.get<Category[]>(this.apiUrl).pipe(
+      map((categories) =>
+        categories.map((cat) => ({
+          id: cat.id,
+          slug: cat.slug,
+          name: cat.name,
+          description: cat.description,
+          gradientBackground: cat.gradientBackground,
+          imageUrl: cat.imageUrl,
+          iconClass: cat.iconClass,
+          subcategoriesCount: cat.subcategories ? cat.subcategories.length : 0
+        }))
+      )
+    );
   }
 
-  // Aponta para a raiz apiUrl (onde o backend entrega todas as categorias completas)
+  // Utilizado no Painel Admin: retorna a lista completa com subcategorias e livros
   getFullCategories(): Observable<Category[]> {
     return this.http.get<Category[]>(this.apiUrl);
   }
