@@ -418,7 +418,7 @@ export class AdminComponent implements OnInit {
   }
 
   loadData() {
-    this.categoryService.getCategories().subscribe({
+    this.categoryService.getFullCategories().subscribe({
       next: (data) => {
         this.fullCategories.set(data || []);
         if (this.bookCategoryId) {
