@@ -115,6 +115,21 @@ export class CategoryService {
     );
   }
 
+  updateBook(categoryId: string, subcategoryId: string, bookId: string, bookData: Partial<Book>): Observable<any> {
+    return this.http.put<any>(
+      `${this.apiUrl}/${categoryId}/subcategories/${subcategoryId}/books/${bookId}`,
+      bookData,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  deleteBook(categoryId: string, subcategoryId: string, bookId: string): Observable<any> {
+    return this.http.delete<any>(
+      `${this.apiUrl}/${categoryId}/subcategories/${subcategoryId}/books/${bookId}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
   likeBook(bookId: string): Observable<{ success: boolean; likes: number }> {
     return this.http.post<{ success: boolean; likes: number }>(`${this.apiUrl}/books/${bookId}/like`, {});
   }

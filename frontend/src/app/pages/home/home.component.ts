@@ -41,7 +41,7 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
                 class="form-control border-0 py-2 py-md-3 shadow-none fs-6"
                 [(ngModel)]="searchQuery"
                 (input)="onSearchInput()"
-                placeholder="Buscar título, autor, assunto ou palavra-chave..."
+                placeholder="Buscar título, autor, assunto ou ID do livro..."
               />
               @if (searchQuery) {
                 <button
@@ -89,7 +89,9 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
                           }
                           <div>
                             <div class="fw-bold text-dark mb-0 fs-6">{{ book.title }}</div>
-                            <small class="text-muted d-block">{{ book.author }}</small>
+                            <small class="text-muted d-block">
+                              ID: <span class="font-monospace text-primary">{{ book.id }}</span> &bull; {{ book.author }}
+                            </small>
                             <span class="badge bg-light text-secondary border mt-1 small">
                               {{ book.categoryName }} &bull; {{ book.subcategoryName }}
                             </span>
@@ -314,11 +316,11 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
                 <div class="col-md-8 d-flex flex-column justify-content-between">
                   <div>
                     <h3 class="fw-bold text-dark mb-1">{{ detailBook()?.title }}</h3>
+                    <!-- Exibição do ID integrando com o CRUD do painel admin -->
                     <p class="text-muted small mb-2">
-                      <strong>Autor(es):</strong> {{ detailBook()?.author }}
-                      <span *ngIf="detailBook()?.pages" class="ms-2"
-                        >&bull; {{ detailBook()?.pages }} páginas</span
-                      >
+                      <strong>ID:</strong> <code class="text-primary fw-bold user-select-all">{{ detailBook()?.id }}</code> 
+                      <span class="ms-2">&bull; <strong>Autor(es):</strong> {{ detailBook()?.author }}</span>
+                      <span *ngIf="detailBook()?.pages" class="ms-2">&bull; {{ detailBook()?.pages }} págs</span>
                     </p>
 
                     @if (detailBook()?.keywords && detailBook()!.keywords!.length > 0) {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CategoryService } from '../../services/category.service';
-import { Category, Subcategory } from '../../models/category.model';
+import { Category, Subcategory, Book } from '../../models/category.model';
 
 @Component({
   selector: 'app-admin',
@@ -43,6 +43,11 @@ import { Category, Subcategory } from '../../models/category.model';
         <li class="nav-item">
           <button class="nav-link rounded-3 fw-semibold" [class.active]="currentTab() === 'books'" (click)="setTab('books')">
             <i class="bi bi-journal-plus me-1"></i> Cadastrar Livros
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link rounded-3 fw-semibold" [class.active]="currentTab() === 'manage-books'" (click)="setTab('manage-books')">
+            <i class="bi bi-journal-text me-1"></i> Gerenciar Livros
           </button>
         </li>
         <li class="nav-item">
@@ -121,7 +126,6 @@ import { Category, Subcategory } from '../../models/category.model';
               <textarea class="form-control" [(ngModel)]="bookDescription" name="bookDescription" rows="3" placeholder="Breve resumo sobre os temas cobertos na obra..."></textarea>
             </div>
 
-            <!-- Palavras-chave / Tags de Busca -->
             <div class="mb-3">
               <label class="form-label fw-semibold">Palavras-chave / Tags de Busca *</label>
               <div class="input-group">
@@ -131,7 +135,6 @@ import { Category, Subcategory } from '../../models/category.model';
               <small class="text-muted">Informe palavras-chave separadas por vírgula para indexação nas pesquisas.</small>
             </div>
 
-            <!-- URL da Capa do Livro -->
             <div class="mb-3">
               <label class="form-label fw-semibold">URL da Capa do Livro (Opcional)</label>
               <div class="input-group">
@@ -141,7 +144,6 @@ import { Category, Subcategory } from '../../models/category.model';
               <small class="text-muted">Se deixar em branco, o sistema exibirá uma capa temática automática.</small>
             </div>
 
-            <!-- Link do Google Drive -->
             <div class="mb-4">
               <label class="form-label fw-semibold">Link ou ID de Compartilhamento do Google Drive *</label>
               <div class="input-group">
@@ -163,6 +165,115 @@ import { Category, Subcategory } from '../../models/category.model';
               }
             </button>
           </form>
+        </div>
+      }
+
+      <!-- ============================================================= -->
+      <!-- ABA: GERENCIAR LIVROS (COM FILTROS E PAGINAÇÃO)               -->
+      <!-- ============================================================= -->
+      @if (currentTab() === 'manage-books') {
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+          <h4 class="fw-bold mb-3 text-dark"><i class="bi bi-search text-primary me-2"></i>Filtrar e Gerenciar Acervo</h4>
+          
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Filtrar por Categoria</label>
+              <select class="form-select" [(ngModel)]="manageFilterCategoryId" (change)="onManageCategoryChange()" name="manageFilterCategoryId">
+                <option value="">Todas as Categorias</option>
+                @for (cat of fullCategories(); track cat.id) {
+                  <option [value]="cat.id">{{ cat.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Filtrar por Subcategoria</label>
+              <select class="form-select" [(ngModel)]="manageFilterSubcategoryId" (change)="currentPage.set(1)" name="manageFilterSubcategoryId">
+                <option value="">Todas as Subcategorias</option>
+                @for (sub of availableManageSubcategories(); track sub.id) {
+                  <option [value]="sub.id">{{ sub.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Busca Rápida (Título, Autor ou ID)</label>
+              <input type="text" class="form-control" [(ngModel)]="manageFilterQuery" (input)="currentPage.set(1)" name="manageFilterQuery" placeholder="Ex: book-1740... ou Histologia">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover align-middle border">
+              <thead class="table-light">
+                <tr>
+                  <th>ID do Livro</th>
+                  <th>Capa</th>
+                  <th>Título / Autor</th>
+                  <th>Subcategoria</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of paginatedBooksList(); track item.book.id) {
+                  <tr>
+                    <td><code class="text-primary fw-bold user-select-all">{{ item.book.id }}</code></td>
+                    <td>
+                      @if (item.book.coverUrl) {
+                        <img [src]="item.book.coverUrl" class="rounded shadow-sm" style="width: 35px; height: 50px; object-fit: cover;">
+                      } @else {
+                        <span class="badge bg-secondary">Sem Capa</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="fw-bold">{{ item.book.title }}</div>
+                      <small class="text-muted">{{ item.book.author }}</small>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ item.subcategoryName }}</span></td>
+                    <td class="text-end">
+                      <div class="d-flex gap-2 justify-content-end align-items-center">
+                        <button class="btn btn-sm btn-outline-primary" (click)="openEditBookModal(item)" title="Editar">
+                          <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" (click)="deleteBook(item)" title="Excluir">
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">Nenhum livro encontrado com os filtros informados.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Controles de Paginação -->
+          @if (totalPages() > 1) {
+            <nav class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top flex-wrap gap-2">
+              <small class="text-muted">
+                Mostrando página <strong>{{ currentPage() }}</strong> de <strong>{{ totalPages() }}</strong> 
+                (Total: {{ filteredBooksList().length }} livros)
+              </small>
+              
+              <ul class="pagination pagination-sm m-0">
+                <li class="page-item" [class.disabled]="currentPage() === 1">
+                  <button class="page-link" (click)="changePage(currentPage() - 1)">Anterior</button>
+                </li>
+                
+                @for (p of [].constructor(totalPages()); track $index) {
+                  <li class="page-item" [class.active]="currentPage() === ($index + 1)">
+                    <button class="page-link" (click)="changePage($index + 1)">{{ $index + 1 }}</button>
+                  </li>
+                }
+
+                <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+                  <button class="page-link" (click)="changePage(currentPage() + 1)">Próxima</button>
+                </li>
+              </ul>
+            </nav>
+          }
         </div>
       }
 
@@ -219,7 +330,6 @@ import { Category, Subcategory } from '../../models/category.model';
           </form>
         </div>
 
-        <!-- Tabela de Categorias Existentes -->
         <div class="card border-0 shadow-sm rounded-4 p-4">
           <h5 class="fw-bold mb-3 text-dark">Categorias Cadastradas ({{ fullCategories().length }})</h5>
           <div class="table-responsive">
@@ -242,12 +352,14 @@ import { Category, Subcategory } from '../../models/category.model';
                     <td><i [class]="'bi ' + cat.iconClass + ' fs-5 text-primary'"></i></td>
                     <td><span class="badge bg-secondary-subtle text-secondary border">{{ cat.subcategories ? cat.subcategories.length : 0 }} tópicos</span></td>
                     <td class="text-end">
-                      <button class="btn btn-outline-primary btn-sm me-2" (click)="startEditCategory(cat)">
-                        <i class="bi bi-pencil-fill"></i>
-                      </button>
-                      <button class="btn btn-outline-danger btn-sm" (click)="deleteCategory(cat.id, cat.name)">
-                        <i class="bi bi-trash-fill"></i>
-                      </button>
+                      <div class="d-flex gap-2 justify-content-end align-items-center">
+                        <button class="btn btn-outline-primary btn-sm" (click)="startEditCategory(cat)">
+                          <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" (click)="deleteCategory(cat.id, cat.name)">
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 } @empty {
@@ -314,7 +426,6 @@ import { Category, Subcategory } from '../../models/category.model';
           </form>
         </div>
 
-        <!-- Filtro e Tabela de Subcategorias -->
         <div class="card border-0 shadow-sm rounded-4 p-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold m-0 text-dark">Subcategorias Cadastradas</h5>
@@ -348,12 +459,14 @@ import { Category, Subcategory } from '../../models/category.model';
                     <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ item.catName }}</span></td>
                     <td>{{ item.sub.books ? item.sub.books.length : 0 }} livros</td>
                     <td class="text-end">
-                      <button class="btn btn-outline-primary btn-sm me-2" (click)="startEditSubcategory(item.catId, item.sub)">
-                        <i class="bi bi-pencil-fill"></i>
-                      </button>
-                      <button class="btn btn-outline-danger btn-sm" (click)="deleteSubcategory(item.catId, item.sub.id, item.sub.name)">
-                        <i class="bi bi-trash-fill"></i>
-                      </button>
+                      <div class="d-flex gap-2 justify-content-end align-items-center">
+                        <button class="btn btn-outline-primary btn-sm" (click)="startEditSubcategory(item.catId, item.sub)">
+                          <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" (click)="deleteSubcategory(item.catId, item.sub.id, item.sub.name)">
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 } @empty {
@@ -370,12 +483,52 @@ import { Category, Subcategory } from '../../models/category.model';
       }
 
     </div>
+
+    <!-- Modal de Edição de Livro -->
+    @if (editingBookData()) {
+      <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.65); z-index: 1050;">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header">
+              <h5 class="modal-title fw-bold">Editar Livro (ID: <code>{{ editingBookData()?.book?.id }}</code>)</h5>
+              <button type="button" class="btn-close" (click)="editingBookData.set(null)"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Título</label>
+                <input type="text" class="form-control" [(ngModel)]="editingBookData()!.book.title">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Autor(es)</label>
+                <input type="text" class="form-control" [(ngModel)]="editingBookData()!.book.author">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Drive File ID</label>
+                <input type="text" class="form-control" [(ngModel)]="editingBookData()!.book.driveFileId">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">URL da Capa</label>
+                <input type="text" class="form-control" [(ngModel)]="editingBookData()!.book.coverUrl">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Descrição / Resumo</label>
+                <textarea class="form-control" rows="3" [(ngModel)]="editingBookData()!.book.description"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary rounded-pill px-4" (click)="editingBookData.set(null)">Cancelar</button>
+              <button type="button" class="btn btn-primary rounded-pill px-4" (click)="saveEditedBook()">Salvar Alterações</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   `
 })
 export class AdminComponent implements OnInit {
   private categoryService = inject(CategoryService);
 
-  currentTab = signal<'books' | 'categories' | 'subcategories'>('books');
+  currentTab = signal<'books' | 'manage-books' | 'categories' | 'subcategories'>('books');
   fullCategories = signal<Category[]>([]);
   isSubmitting = signal<boolean>(false);
   successMessage = signal<string | null>(null);
@@ -396,6 +549,16 @@ export class AdminComponent implements OnInit {
 
   availableBookSubcategories = signal<Subcategory[]>([]);
   availableBookChildSubcategories = signal<Subcategory[]>([]);
+
+  // --- GERENCIAR / FILTRAR LIVROS & PAGINAÇÃO ---
+  manageFilterCategoryId = '';
+  manageFilterSubcategoryId = '';
+  manageFilterQuery = '';
+  availableManageSubcategories = signal<Subcategory[]>([]);
+  editingBookData = signal<{ categoryId: string; subcategoryId: string; book: Book } | null>(null);
+
+  currentPage = signal<number>(1);
+  pageSize = 10;
 
   // --- FORMULÁRIO CATEGORIAS ---
   editingCategoryId = signal<string | null>(null);
@@ -425,6 +588,10 @@ export class AdminComponent implements OnInit {
           const active = (data || []).find(c => c.id === this.bookCategoryId);
           this.availableBookSubcategories.set(active ? active.subcategories : []);
         }
+        if (this.manageFilterCategoryId) {
+          const activeManage = (data || []).find(c => c.id === this.manageFilterCategoryId);
+          this.availableManageSubcategories.set(activeManage ? activeManage.subcategories : []);
+        }
       },
       error: (err) => {
         console.error('Erro ao carregar dados:', err);
@@ -433,7 +600,7 @@ export class AdminComponent implements OnInit {
     });
   }
 
-  setTab(tab: 'books' | 'categories' | 'subcategories') {
+  setTab(tab: 'books' | 'manage-books' | 'categories' | 'subcategories') {
     this.currentTab.set(tab);
     this.successMessage.set(null);
     this.errorMessage.set(null);
@@ -454,6 +621,13 @@ export class AdminComponent implements OnInit {
     this.bookChildSubcategoryId = '';
     const selected = this.availableBookSubcategories().find(s => s.id === this.bookSubcategoryId);
     this.availableBookChildSubcategories.set(selected?.subcategories || []);
+  }
+
+  onManageCategoryChange() {
+    this.manageFilterSubcategoryId = '';
+    const active = this.fullCategories().find(c => c.id === this.manageFilterCategoryId);
+    this.availableManageSubcategories.set(active ? active.subcategories : []);
+    this.currentPage.set(1);
   }
 
   extractDriveId() {
@@ -515,6 +689,97 @@ export class AdminComponent implements OnInit {
     this.bookCoverUrl = '';
     this.bookRawDriveInput = '';
     this.bookExtractedId.set('');
+  }
+
+  // Listagem de livros para gerenciamento com filtros ativos
+  filteredBooksList(): { categoryId: string; subcategoryId: string; subcategoryName: string; book: Book }[] {
+    const list: { categoryId: string; subcategoryId: string; subcategoryName: string; book: Book }[] = [];
+
+    this.fullCategories().forEach(cat => {
+      if (this.manageFilterCategoryId && cat.id !== this.manageFilterCategoryId) return;
+
+      (cat.subcategories || []).forEach(sub => {
+        if (this.manageFilterSubcategoryId && sub.id !== this.manageFilterSubcategoryId) return;
+
+        (sub.books || []).forEach(book => {
+          const q = this.manageFilterQuery.toLowerCase().trim();
+          if (q) {
+            const matchId = book.id?.toLowerCase().includes(q);
+            const matchTitle = book.title?.toLowerCase().includes(q);
+            const matchAuthor = book.author?.toLowerCase().includes(q);
+            if (!matchId && !matchTitle && !matchAuthor) return;
+          }
+
+          list.push({
+            categoryId: cat.id,
+            subcategoryId: sub.id,
+            subcategoryName: sub.name,
+            book: { ...book }
+          });
+        });
+      });
+    });
+
+    return list;
+  }
+
+  // Métodos de Paginação
+  paginatedBooksList() {
+    const allFiltered = this.filteredBooksList();
+    const startIndex = (this.currentPage() - 1) * this.pageSize;
+    return allFiltered.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  totalPages(): number {
+    const total = this.filteredBooksList().length;
+    return Math.ceil(total / this.pageSize) || 1;
+  }
+
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  openEditBookModal(item: { categoryId: string; subcategoryId: string; book: Book }) {
+    this.editingBookData.set({
+      categoryId: item.categoryId,
+      subcategoryId: item.subcategoryId,
+      book: { ...item.book }
+    });
+  }
+
+  saveEditedBook() {
+    const data = this.editingBookData();
+    if (!data) return;
+    this.isSubmitting.set(true);
+
+    this.categoryService.updateBook(data.categoryId, data.subcategoryId, data.book.id, data.book).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.successMessage.set('Livro atualizado com sucesso!');
+        this.editingBookData.set(null);
+        this.loadData();
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.errorMessage.set('Erro ao atualizar livro: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  deleteBook(item: { categoryId: string; subcategoryId: string; book: Book }) {
+    if (!confirm(`Deseja realmente excluir o livro "${item.book.title}" (ID: ${item.book.id})?`)) return;
+
+    this.categoryService.deleteBook(item.categoryId, item.subcategoryId, item.book.id).subscribe({
+      next: () => {
+        this.successMessage.set(`Livro "${item.book.title}" excluído.`);
+        this.loadData();
+      },
+      error: (err) => {
+        this.errorMessage.set('Erro ao excluir livro: ' + (err.error?.message || err.message));
+      }
+    });
   }
 
   // ==========================================

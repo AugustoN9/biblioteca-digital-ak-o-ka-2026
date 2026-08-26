@@ -57,7 +57,7 @@ router.get('/books/top-liked', async (req, res) => {
   }
 });
 
-// GET /api/categories/books/search (Busca Global)
+// GET /api/categories/books/search (Busca Global com suporte a ID)
 router.get('/books/search', async (req, res) => {
   try {
     const q = ((req.query.q as string) || '').toLowerCase().trim();
@@ -72,42 +72,24 @@ router.get('/books/search', async (req, res) => {
       (cat.subcategories || []).forEach((sub: any) => {
         // Nível 2
         (sub.books || []).forEach((book: any) => {
+          const idMatch = book.id?.toLowerCase().includes(q);
           const titleMatch = book.title?.toLowerCase().includes(q);
           const authorMatch = book.author?.toLowerCase().includes(q);
           const descMatch = book.description?.toLowerCase().includes(q);
           const tagMatch = (book.keywords || []).some((k: string) => k.toLowerCase().includes(q));
 
-          if (titleMatch || authorMatch || descMatch || tagMatch) {
+          if (idMatch || titleMatch || authorMatch || descMatch || tagMatch) {
             const bookData = book.toObject ? book.toObject() : book;
             results.push({
               ...bookData,
+              categoryId: cat.id,
+              subcategoryId: sub.id,
               categorySlug: cat.slug,
               categoryName: cat.name,
               subcategorySlug: sub.slug,
               subcategoryName: sub.name
             });
           }
-        });
-
-        // Nível 3
-        (sub.subcategories || []).forEach((child: any) => {
-          (child.books || []).forEach((book: any) => {
-            const titleMatch = book.title?.toLowerCase().includes(q);
-            const authorMatch = book.author?.toLowerCase().includes(q);
-            const descMatch = book.description?.toLowerCase().includes(q);
-            const tagMatch = (book.keywords || []).some((k: string) => k.toLowerCase().includes(q));
-
-            if (titleMatch || authorMatch || descMatch || tagMatch) {
-              const bookData = book.toObject ? book.toObject() : book;
-              results.push({
-                ...bookData,
-                categorySlug: cat.slug,
-                categoryName: cat.name,
-                subcategorySlug: sub.slug,
-                subcategoryName: child.name
-              });
-            }
-          });
         });
       });
     });
