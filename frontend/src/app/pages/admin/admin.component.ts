@@ -503,8 +503,9 @@ import { Category, Subcategory, Book } from '../../models/category.model';
                 <input type="text" class="form-control" [(ngModel)]="editingBookData()!.book.author">
               </div>
               <div class="mb-3">
-                <label class="form-label small fw-bold">Drive File ID</label>
-                <input type="text" class="form-control" [(ngModel)]="editingBookData()!.book.driveFileId">
+                <label class="form-label small fw-bold">Drive File ID ou Link do Drive</label>
+                <input type="text" class="form-control" [(ngModel)]="editingBookData()!.book.driveFileId" (input)="extractEditDriveId()">
+                <small class="text-muted">O sistema extrairá o ID correto automaticamente.</small>
               </div>
               <div class="mb-3">
                 <label class="form-label small fw-bold">URL da Capa</label>
@@ -634,6 +635,18 @@ export class AdminComponent implements OnInit {
     const input = this.bookRawDriveInput.trim();
     const match = input.match(/\/d\/([a-zA-Z0-9_-]+)/) || input.match(/id=([a-zA-Z0-9_-]+)/);
     this.bookExtractedId.set(match && match[1] ? match[1] : input);
+  }
+
+  extractEditDriveId() {
+    const data = this.editingBookData();
+    if (!data || !data.book.driveFileId) return;
+    
+    const input = data.book.driveFileId.trim();
+    const match = input.match(/\/d\/([a-zA-Z0-9_-]+)/) || input.match(/id=([a-zA-Z0-9_-]+)/);
+    
+    if (match && match[1]) {
+      data.book.driveFileId = match[1];
+    }
   }
 
   isValidBookForm(): boolean {
