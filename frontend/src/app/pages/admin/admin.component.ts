@@ -128,7 +128,7 @@ import { Category, Subcategory } from '../../models/category.model';
                 <span class="input-group-text bg-light"><i class="bi bi-tags"></i></span>
                 <input type="text" class="form-control" [(ngModel)]="bookKeywordsInput" name="bookKeywordsInput" placeholder="Ex: Tecido Epitelial, Células, Microscopia" required>
               </div>
-              <small class="text-muted">Informe 3 palavras-chave separadas por vírgula para indexação nas pesquisas.</small>
+              <small class="text-muted">Informe palavras-chave separadas por vírgula para indexação nas pesquisas.</small>
             </div>
 
             <!-- URL da Capa do Livro -->
@@ -240,7 +240,7 @@ import { Category, Subcategory } from '../../models/category.model';
                       <small class="text-muted text-truncate d-block" style="max-width: 320px;">{{ cat.description }}</small>
                     </td>
                     <td><i [class]="'bi ' + cat.iconClass + ' fs-5 text-primary'"></i></td>
-                    <td><span class="badge bg-secondary-subtle text-secondary border">{{ cat.subcategories.length }} tópicos</span></td>
+                    <td><span class="badge bg-secondary-subtle text-secondary border">{{ cat.subcategories ? cat.subcategories.length : 0 }} tópicos</span></td>
                     <td class="text-end">
                       <button class="btn btn-outline-primary btn-sm me-2" (click)="startEditCategory(cat)">
                         <i class="bi bi-pencil-fill"></i>
@@ -248,6 +248,12 @@ import { Category, Subcategory } from '../../models/category.model';
                       <button class="btn btn-outline-danger btn-sm" (click)="deleteCategory(cat.id, cat.name)">
                         <i class="bi bi-trash-fill"></i>
                       </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">
+                      Nenhuma categoria encontrada no banco de dados.
                     </td>
                   </tr>
                 }
@@ -340,7 +346,7 @@ import { Category, Subcategory } from '../../models/category.model';
                       <small class="text-muted text-truncate d-block" style="max-width: 280px;">{{ item.sub.description || 'Sem descrição' }}</small>
                     </td>
                     <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ item.catName }}</span></td>
-                    <td>{{ item.sub.books.length }} livros</td>
+                    <td>{{ item.sub.books ? item.sub.books.length : 0 }} livros</td>
                     <td class="text-end">
                       <button class="btn btn-outline-primary btn-sm me-2" (click)="startEditSubcategory(item.catId, item.sub)">
                         <i class="bi bi-pencil-fill"></i>
@@ -348,6 +354,12 @@ import { Category, Subcategory } from '../../models/category.model';
                       <button class="btn btn-outline-danger btn-sm" (click)="deleteSubcategory(item.catId, item.sub.id, item.sub.name)">
                         <i class="bi bi-trash-fill"></i>
                       </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">
+                      Nenhuma subcategoria encontrada para a categoria selecionada.
                     </td>
                   </tr>
                 }
@@ -406,15 +418,18 @@ export class AdminComponent implements OnInit {
   }
 
   loadData() {
-    this.categoryService.getFullCategories().subscribe({
+    this.categoryService.getCategories().subscribe({
       next: (data) => {
-        this.fullCategories.set(data);
+        this.fullCategories.set(data || []);
         if (this.bookCategoryId) {
-          const active = data.find(c => c.id === this.bookCategoryId);
+          const active = (data || []).find(c => c.id === this.bookCategoryId);
           this.availableBookSubcategories.set(active ? active.subcategories : []);
         }
       },
-      error: (err) => console.error('Erro ao carregar dados:', err)
+      error: (err) => {
+        console.error('Erro ao carregar dados:', err);
+        this.errorMessage.set('Erro ao sincronizar dados com o servidor.');
+      }
     });
   }
 
@@ -528,7 +543,16 @@ export class AdminComponent implements OnInit {
     if (!this.catFormName) return;
     this.isSubmitting.set(true);
 
+    const slug = this.catFormName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '');
+
     const payload = {
+      id: this.editingCategoryId() || slug,
+      slug: this.editingCategoryId() || slug,
       name: this.catFormName,
       iconClass: this.catFormIcon,
       gradientBackground: this.catFormGradient,
@@ -605,7 +629,16 @@ export class AdminComponent implements OnInit {
     if (!this.subFormCategoryId || !this.subFormName) return;
     this.isSubmitting.set(true);
 
+    const slug = this.subFormName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '');
+
     const payload = {
+      id: this.editingSubcategoryId() || slug,
+      slug: this.editingSubcategoryId() || slug,
       name: this.subFormName,
       imageUrl: this.subFormImage,
       description: this.subFormDescription
