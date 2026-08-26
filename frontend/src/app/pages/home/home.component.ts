@@ -89,7 +89,7 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
         </div>
       </div>
 
-      <!-- Seção: Top 5 Livros Mais Curtidos -->
+      <!-- Seção: Top 5 Livros Mais Curtidos (Formato Capa de Livro) -->
       @if (topLikedBooks().length > 0) {
         <section class="mb-5">
           <div class="d-flex align-items-center justify-content-between mb-3">
@@ -101,40 +101,42 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
             </span>
           </div>
 
-          <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+          <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3 g-md-4">
             @for (book of topLikedBooks(); track book.id) {
               <div class="col">
-                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative top-book-card"
+                <div class="book-cover-card shadow-sm rounded-4 overflow-hidden position-relative h-100"
                      (click)="openBookDetails(book)"
-                     style="cursor: pointer;">
+                     role="button"
+                     style="height: 270px; cursor: pointer;">
                   
                   <!-- Badge de Curtidas -->
-                  <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75 rounded-pill px-2 py-1 shadow-sm z-2">
-                    <i class="bi bi-heart-fill text-danger me-1"></i>{{ book.likes || 0 }}
-                  </span>
+                  <button class="like-badge-btn" (click)="onLike($event, book)">
+                    <i class="bi bi-heart-fill text-danger me-1"></i> {{ book.likes || 0 }}
+                  </button>
 
-                  <!-- Capa do Livro -->
-                  <div class="ratio ratio-3x4 bg-light">
-                    @if (book.coverUrl) {
-                      <img [src]="book.coverUrl" [alt]="book.title" class="object-fit-cover w-100 h-100" />
-                    } @else {
-                      <div class="d-flex flex-column justify-content-center align-items-center p-3 text-center bg-secondary text-white h-100">
-                        <i class="bi bi-book fs-1 opacity-50 mb-2"></i>
-                        <small class="fw-bold line-clamp-2">{{ book.title }}</small>
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Informações do Card -->
-                  <div class="card-body p-2 p-md-3 d-flex flex-column justify-content-between">
-                    <div>
-                      <h6 class="fw-bold text-dark text-truncate mb-1" [title]="book.title">{{ book.title }}</h6>
-                      <small class="text-muted text-truncate d-block">{{ book.author }}</small>
+                  <!-- Capa com Imagem Real -->
+                  @if (book.coverUrl) {
+                    <img [src]="book.coverUrl" [alt]="book.title" class="book-cover-img w-100 h-100 object-fit-cover" />
+                    <div class="book-overlay p-3 position-absolute bottom-0 start-0 w-100 text-white">
+                      <h6 class="fw-bold m-0 text-truncate small">{{ book.title }}</h6>
+                      <small class="opacity-75 text-truncate d-block" style="font-size: 0.75rem;">{{ book.author }}</small>
+                      <span class="badge bg-white text-dark mt-1" style="font-size: 0.65rem;">{{ book.categoryName }}</span>
                     </div>
-                    <small class="badge bg-light text-primary border text-truncate mt-2 text-start">
-                      {{ book.categoryName }}
-                    </small>
-                  </div>
+                  } @else {
+                    <!-- Capa Padrão Estilizada com Gradiente -->
+                    <div class="book-default-cover p-3 d-flex flex-column justify-content-between h-100 text-white bg-dark"
+                         style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                      <div>
+                        <span class="badge bg-danger mb-2">PDF</span>
+                        <h6 class="fw-bold mb-1 line-clamp-3 small">{{ book.title }}</h6>
+                      </div>
+                      <div>
+                        <hr class="border-white opacity-50 my-2">
+                        <small class="opacity-75 d-block text-truncate" style="font-size: 0.75rem;">{{ book.author }}</small>
+                        <span class="badge bg-white text-dark mt-1" style="font-size: 0.65rem;">{{ book.categoryName }}</span>
+                      </div>
+                    </div>
+                  }
 
                 </div>
               </div>
@@ -290,7 +292,64 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
         </div>
       </div>
     }
-  `
+  `,
+  styles: [`
+    .book-cover-card {
+      position: relative;
+      height: 270px;
+      background-color: #1e293b;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      user-select: none;
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2) !important;
+
+        .book-overlay {
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.95) 100%);
+        }
+      }
+
+      .book-cover-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .book-overlay {
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.85) 100%);
+        transition: background 0.25s ease;
+      }
+
+      .like-badge-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 5;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(4px);
+        color: #fff;
+        border: none;
+        border-radius: 50rem;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+
+        &:hover {
+          transform: scale(1.1);
+        }
+      }
+    }
+
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  `]
 })
 export class HomeComponent implements OnInit {
   private categoryService = inject(CategoryService);
@@ -362,7 +421,7 @@ export class HomeComponent implements OnInit {
     this.selectedBook.set(book);
   }
 
-  onLike(event: Event, book: Book) {
+  onLike(event: Event, book: Book | SearchBookResult) {
     event.stopPropagation();
     this.categoryService.likeBook(book.id).subscribe({
       next: (res) => {
