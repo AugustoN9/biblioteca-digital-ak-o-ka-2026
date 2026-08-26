@@ -24,7 +24,7 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
       </div>
 
       <!-- Container de Busca Unificada (Fixo no Mobile) -->
-      <div class="sticky-search-mobile">
+      <div class="sticky-search-mobile mb-4">
         <div class="row justify-content-center m-0">
           <div class="col-12 col-md-8 col-lg-6 position-relative px-2">
             <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border bg-white">
@@ -89,6 +89,60 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
         </div>
       </div>
 
+      <!-- Seção: Top 5 Livros Mais Curtidos -->
+      @if (topLikedBooks().length > 0) {
+        <section class="mb-5">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="fw-bold text-dark m-0">
+              <i class="bi bi-fire text-danger me-2"></i>Mais Populares no Acervo
+            </h5>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 small">
+              Top Favoritos
+            </span>
+          </div>
+
+          <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+            @for (book of topLikedBooks(); track book.id) {
+              <div class="col">
+                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative top-book-card"
+                     (click)="openBookDetails(book)"
+                     style="cursor: pointer;">
+                  
+                  <!-- Badge de Curtidas -->
+                  <span class="position-absolute top-0 end-0 m-2 badge bg-dark bg-opacity-75 rounded-pill px-2 py-1 shadow-sm z-2">
+                    <i class="bi bi-heart-fill text-danger me-1"></i>{{ book.likes || 0 }}
+                  </span>
+
+                  <!-- Capa do Livro -->
+                  <div class="ratio ratio-3x4 bg-light">
+                    @if (book.coverUrl) {
+                      <img [src]="book.coverUrl" [alt]="book.title" class="object-fit-cover w-100 h-100" />
+                    } @else {
+                      <div class="d-flex flex-column justify-content-center align-items-center p-3 text-center bg-secondary text-white h-100">
+                        <i class="bi bi-book fs-1 opacity-50 mb-2"></i>
+                        <small class="fw-bold line-clamp-2">{{ book.title }}</small>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Informações do Card -->
+                  <div class="card-body p-2 p-md-3 d-flex flex-column justify-content-between">
+                    <div>
+                      <h6 class="fw-bold text-dark text-truncate mb-1" [title]="book.title">{{ book.title }}</h6>
+                      <small class="text-muted text-truncate d-block">{{ book.author }}</small>
+                    </div>
+                    <small class="badge bg-light text-primary border text-truncate mt-2 text-start">
+                      {{ book.categoryName }}
+                    </small>
+                  </div>
+
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
       <!-- Indicadores de Carregamento -->
       @if (loading()) {
         <div class="text-center py-5">
@@ -106,7 +160,7 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
       }
 
       <!-- Grid de Categorias -->
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2">
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         @for (category of categories(); track category.id) {
           <div class="col">
             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden category-card-hover" 
@@ -145,7 +199,7 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
       </div>
     </div>
 
-    <!-- Modal de Detalhes do Livro Encontrado pela Busca -->
+    <!-- Modal de Detalhes do Livro Encontrado pela Busca / Top Favoritos -->
     @if (detailBook()) {
       <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.65); z-index: 1055;">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -242,6 +296,7 @@ export class HomeComponent implements OnInit {
   private categoryService = inject(CategoryService);
 
   categories = signal<CategorySummary[]>([]);
+  topLikedBooks = signal<SearchBookResult[]>([]);
   loading = signal<boolean>(true);
   errorMessage = signal<string | null>(null);
 
@@ -253,6 +308,11 @@ export class HomeComponent implements OnInit {
   selectedBook = signal<Book | null>(null);
 
   ngOnInit() {
+    this.loadCategories();
+    this.loadTopBooks();
+  }
+
+  loadCategories() {
     this.categoryService.getCategories().subscribe({
       next: (data) => {
         this.categories.set(data);
@@ -262,6 +322,13 @@ export class HomeComponent implements OnInit {
         this.errorMessage.set(`Falha na requisição HTTP: ${err.message || 'Verifique o backend'}`);
         this.loading.set(false);
       }
+    });
+  }
+
+  loadTopBooks() {
+    this.categoryService.getTopLikedBooks().subscribe({
+      next: (books) => this.topLikedBooks.set(books || []),
+      error: (err) => console.error('Erro ao carregar top livros:', err)
     });
   }
 
@@ -300,7 +367,9 @@ export class HomeComponent implements OnInit {
     this.categoryService.likeBook(book.id).subscribe({
       next: (res) => {
         book.likes = res.likes;
-      }
+        this.loadTopBooks();
+      },
+      error: (err) => console.error('Erro ao curtir livro:', err)
     });
   }
 

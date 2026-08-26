@@ -4,6 +4,77 @@ import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
+// ============================================================================
+// 1. ROTAS ESPECÍFICAS / ESTÁTICAS (DEVEM VIR SEMPRE ANTES DE /:slug OU /:id)
+// ============================================================================
+
+// GET /api/categories/books/top-liked
+router.get('/books/top-liked', async (req, res) => {
+  try {
+    const categories = await Category.find({});
+    const allBooks: any[] = [];
+
+    categories.forEach((cat) => {
+      cat.subcategories?.forEach((sub) => {
+        // Nível 2
+        sub.books?.forEach((b: any) => {
+          allBooks.push({
+            id: b.id,
+            title: b.title,
+            author: b.author,
+            description: b.description,
+            coverUrl: b.coverUrl,
+            driveFileId: b.driveFileId,
+            pages: b.pages,
+            keywords: b.keywords,
+            likes: b.likes || 0,
+            categoryName: cat.name,
+            categorySlug: cat.slug,
+            subcategoryName: sub.name,
+            subcategorySlug: sub.slug
+          });
+        });
+
+        // Nível 3
+        sub.subcategories?.forEach((child: any) => {
+          child.books?.forEach((b: any) => {
+            allBooks.push({
+              id: b.id,
+              title: b.title,
+              author: b.author,
+              description: b.description,
+              coverUrl: b.coverUrl,
+              driveFileId: b.driveFileId,
+              pages: b.pages,
+              keywords: b.keywords,
+              likes: b.likes || 0,
+              categoryName: cat.name,
+              categorySlug: cat.slug,
+              subcategoryName: child.name,
+              subcategorySlug: sub.slug
+            });
+          });
+        });
+      });
+    });
+
+    // Ordena do mais curtido para o menos curtido (ou exibe os primeiros se todos tiverem 0 likes)
+    const topBooks = allBooks
+      .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+      .slice(0, 5);
+
+    return res.json(topBooks);
+  } catch (error: any) {
+    console.error('Erro na rota top-liked:', error);
+    return res.status(500).json({ error: 'Erro ao buscar livros mais curtidos.' });
+  }
+});
+
+// GET /api/categories/books/search (Busca global)
+router.get('/books/search', async (req, res) => {
+  // Lógica de busca...
+});
+
 // Obter todas as categorias com subcategorias e livros
 router.get('/', async (req, res) => {
   try {
@@ -227,5 +298,7 @@ router.delete('/:categoryId/subcategories/:subId', authMiddleware, async (req, r
     res.status(400).json({ message: 'Erro ao deletar subcategoria', error: error.message });
   }
 });
+
+
 
 export default router;

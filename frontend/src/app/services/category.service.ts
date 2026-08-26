@@ -3,24 +3,27 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Category, CategorySummary, Subcategory, Book, SearchBookResult } from '../models/category.model';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CategoryService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   //private apiUrl = 'http://localhost:3000/api/categories';
   private apiUrl = 'https://biblioteca-digital-ak-o-ka-2026.onrender.com/api/categories';
 
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token') || '';
+    // Obtém o token salvo pelo AuthService ('admin_token')
+    const token = this.authService.getToken() || localStorage.getItem('admin_token') || '';
+
     return new HttpHeaders({
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
     });
   }
 
-  // Utilizado na Home: mapeia Category[] para CategorySummary[] preenchendo subcategoriesCount
   getCategories(): Observable<CategorySummary[]> {
     return this.http.get<Category[]>(this.apiUrl).pipe(
       map((categories) =>
@@ -38,9 +41,12 @@ export class CategoryService {
     );
   }
 
-  // Utilizado no Painel Admin: retorna a lista completa com subcategorias e livros
   getFullCategories(): Observable<Category[]> {
     return this.http.get<Category[]>(this.apiUrl);
+  }
+
+  getTopLikedBooks(): Observable<SearchBookResult[]> {
+    return this.http.get<SearchBookResult[]>(`${this.apiUrl}/books/top-liked`);
   }
 
   getCategoryBySlug(slug: string): Observable<Category> {
