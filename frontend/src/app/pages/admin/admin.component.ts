@@ -484,7 +484,7 @@ import { Category, Subcategory, Book } from '../../models/category.model';
 
     </div>
 
-    <!-- Modal de Edição de Livro -->
+    <!-- Modal de Edição de Livro com Troca de Categoria/Subcategoria -->
     @if (editingBookData()) {
       <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.65); z-index: 1050;">
         <div class="modal-dialog modal-dialog-centered">
@@ -494,6 +494,30 @@ import { Category, Subcategory, Book } from '../../models/category.model';
               <button type="button" class="btn-close" (click)="editingBookData.set(null)"></button>
             </div>
             <div class="modal-body">
+              
+              <!-- Seletores para mover de Categoria/Subcategoria -->
+              <div class="row g-2 mb-3 bg-light p-3 rounded-3 border">
+                <div class="col-12">
+                  <label class="form-label small fw-bold text-dark mb-1">Localização no Acervo</label>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label text-muted" style="font-size: 0.75rem;">Categoria</label>
+                  <select class="form-select form-select-sm" [(ngModel)]="editingBookData()!.newCategoryId" (change)="onEditCategoryChange()">
+                    @for (cat of fullCategories(); track cat.id) {
+                      <option [value]="cat.id">{{ cat.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label text-muted" style="font-size: 0.75rem;">Subcategoria</label>
+                  <select class="form-select form-select-sm" [(ngModel)]="editingBookData()!.newSubcategoryId">
+                    @for (sub of availableEditSubcategories(); track sub.id) {
+                      <option [value]="sub.id">{{ sub.name }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
               <div class="mb-3">
                 <label class="form-label small fw-bold">Título</label>
                 <input type="text" class="form-control" [(ngModel)]="editingBookData()!.book.title">
@@ -556,7 +580,16 @@ export class AdminComponent implements OnInit {
   manageFilterSubcategoryId = '';
   manageFilterQuery = '';
   availableManageSubcategories = signal<Subcategory[]>([]);
-  editingBookData = signal<{ categoryId: string; subcategoryId: string; book: Book } | null>(null);
+  
+  // Atualizado para suportar movimentação de categoria/subcategoria
+  editingBookData = signal<{ 
+    oldCategoryId: string; 
+    oldSubcategoryId: string; 
+    newCategoryId: string; 
+    newSubcategoryId: string; 
+    book: Book 
+  } | null>(null);
+  availableEditSubcategories = signal<Subcategory[]>([]);
 
   currentPage = signal<number>(1);
   pageSize = 10;
@@ -754,12 +787,27 @@ export class AdminComponent implements OnInit {
     }
   }
 
-  openEditBookModal(item: { categoryId: string; subcategoryId: string; book: Book }) {
+  openEditBookModal(item: { categoryId: string; subcategoryId: string; subcategoryName: string; book: Book }) {
+    const cat = this.fullCategories().find(c => c.id === item.categoryId);
+    this.availableEditSubcategories.set(cat ? cat.subcategories : []);
+
     this.editingBookData.set({
-      categoryId: item.categoryId,
-      subcategoryId: item.subcategoryId,
+      oldCategoryId: item.categoryId,
+      oldSubcategoryId: item.subcategoryId,
+      newCategoryId: item.categoryId,
+      newSubcategoryId: item.subcategoryId,
       book: { ...item.book }
     });
+  }
+
+  onEditCategoryChange() {
+    const data = this.editingBookData();
+    if (!data) return;
+    const cat = this.fullCategories().find(c => c.id === data.newCategoryId);
+    this.availableEditSubcategories.set(cat ? cat.subcategories : []);
+    if (cat && cat.subcategories.length > 0) {
+      data.newSubcategoryId = cat.subcategories[0].id;
+    }
   }
 
   saveEditedBook() {
@@ -767,18 +815,55 @@ export class AdminComponent implements OnInit {
     if (!data) return;
     this.isSubmitting.set(true);
 
-    this.categoryService.updateBook(data.categoryId, data.subcategoryId, data.book.id, data.book).subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        this.successMessage.set('Livro atualizado com sucesso!');
-        this.editingBookData.set(null);
-        this.loadData();
-      },
-      error: (err) => {
-        this.isSubmitting.set(false);
-        this.errorMessage.set('Erro ao atualizar livro: ' + (err.error?.message || err.message));
-      }
-    });
+    const isMoving = data.oldCategoryId !== data.newCategoryId || data.oldSubcategoryId !== data.newSubcategoryId;
+
+    if (isMoving) {
+      // Move o livro: remove da origem antiga e adiciona no novo destino
+      this.categoryService.deleteBook(data.oldCategoryId, data.oldSubcategoryId, data.book.id).subscribe({
+        next: () => {
+          this.categoryService.addBook({
+            categoryId: data.newCategoryId,
+            subcategoryId: data.newSubcategoryId,
+            title: data.book.title,
+            author: data.book.author,
+            description: data.book.description,
+            pages: data.book.pages,
+            coverUrl: data.book.coverUrl,
+            keywords: data.book.keywords || ['Acervo'],
+            driveFileId: data.book.driveFileId
+          }).subscribe({
+            next: () => {
+              this.isSubmitting.set(false);
+              this.successMessage.set('Livro movido e atualizado com sucesso!');
+              this.editingBookData.set(null);
+              this.loadData();
+            },
+            error: (err) => {
+              this.isSubmitting.set(false);
+              this.errorMessage.set('Erro ao adicionar livro no novo destino: ' + (err.error?.message || err.message));
+            }
+          });
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.errorMessage.set('Erro ao remover livro da origem: ' + (err.error?.message || err.message));
+        }
+      });
+    } else {
+      // Apenas atualiza os campos mantendo na mesma subcategoria
+      this.categoryService.updateBook(data.oldCategoryId, data.oldSubcategoryId, data.book.id, data.book).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.successMessage.set('Livro atualizado com sucesso!');
+          this.editingBookData.set(null);
+          this.loadData();
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.errorMessage.set('Erro ao atualizar livro: ' + (err.error?.message || err.message));
+        }
+      });
+    }
   }
 
   deleteBook(item: { categoryId: string; subcategoryId: string; book: Book }) {
