@@ -334,7 +334,7 @@ router.delete('/:categoryId/subcategories/:subcategoryId/books/:bookId', authMid
 // Registrar download de livro (Controlando limite de 5 a cada 24h e incrementando contador)
 router.post('/books/:bookId/download', authMiddleware, async (req, res) => {
   try {
-    const { bookId } = req.params;
+    const bookId = req.params.bookId as string;
     const userId = (req as any).user.id; // Obtido do token JWT
 
     const user = await User.findOne({ id: userId });
