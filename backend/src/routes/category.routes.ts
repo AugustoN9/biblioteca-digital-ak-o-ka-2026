@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import Category from '../models/category.schema.js';
+import User from '../models/user.schema.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = Router();
