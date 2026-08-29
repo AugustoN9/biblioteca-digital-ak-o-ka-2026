@@ -23,6 +23,10 @@ export class AuthService {
     );
   }
 
+  register(data: { name: string; email: string; password: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/register`, data);
+  }
+
   logout() {
     localStorage.removeItem('admin_token');
     this.isLoggedIn.set(false);

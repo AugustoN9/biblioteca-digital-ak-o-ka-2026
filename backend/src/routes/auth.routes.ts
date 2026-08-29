@@ -1,37 +1,69 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import User from '../models/user.schema.js';
 
 const router = Router();
-const JWT_SECRET = 'segredo_jwt_super_seguro_minha_biblioteca_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'sua_chave_secreta_jwt';
 
-// Credenciais do Administrador
-const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin123'
-};
+// Registro de conta de leitor
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Este e-mail já está cadastrado.' });
+    }
 
-// POST /api/auth/login
-router.post('/login', (req: Request, res: Response) => {
-  const { username, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = 'user-' + Date.now();
 
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Informe usuário e senha.' });
+    const newUser = new User({
+      id: userId,
+      name,
+      email,
+      password: hashedPassword,
+      role: 'reader',
+      downloadHistory: []
+    });
+
+    await newUser.save();
+    return res.status(201).json({ success: true, message: 'Conta criada com sucesso!' });
+  } catch (error: any) {
+    return res.status(500).json({ message: 'Erro ao registrar usuário', error: error.message });
   }
+});
 
-  if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+// Login de usuário
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'E-mail ou senha inválidos.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'E-mail ou senha inválidos.' });
+    }
+
     const token = jwt.sign(
-      { username: ADMIN_CREDENTIALS.username, role: 'admin' },
+      { id: user.id, email: user.email, role: user.role, name: user.name },
       JWT_SECRET,
-      { expiresIn: '8h' }
+      { expiresIn: '7d' }
     );
 
     return res.json({
+      success: true,
       token,
-      message: 'Login realizado com sucesso!'
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
     });
+  } catch (error: any) {
+    return res.status(500).json({ message: 'Erro ao realizar login', error: error.message });
   }
-
-  return res.status(401).json({ message: 'Usuário ou senha incorretos.' });
 });
 
 export default router;

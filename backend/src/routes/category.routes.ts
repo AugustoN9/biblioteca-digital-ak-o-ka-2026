@@ -330,4 +330,59 @@ router.delete('/:categoryId/subcategories/:subcategoryId/books/:bookId', authMid
   }
 });
 
+// Registrar download de livro (Controlando limite de 5 a cada 24h e incrementando contador)
+router.post('/books/:bookId/download', authMiddleware, async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    const userId = (req as any).user.id; // Obtido do token JWT
+
+    const user = await User.findOne({ id: userId });
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+
+    // Filtrar downloads das últimas 24 horas
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    user.downloadHistory = user.downloadHistory.filter(
+      (record) => new Date(record.timestamp) > twentyFourHoursAgo
+    );
+
+    if (user.downloadHistory.length >= 5) {
+      return res.status(429).json({
+        message: 'Limite diário de downloads atingido (máximo de 5 livros a cada 24 horas).'
+      });
+    }
+
+    // Encontrar o livro no banco de categorias para incrementar downloadsCount
+    const category = await Category.findOne({ 'subcategories.books.id': bookId });
+    if (!category) {
+      return res.status(404).json({ message: 'Livro não encontrado.' });
+    }
+
+    let bookFound = false;
+    category.subcategories.forEach((sub: any) => {
+      const book = sub.books.find((b: any) => b.id === bookId);
+      if (book) {
+        book.downloadsCount = (book.downloadsCount || 0) + 1;
+        bookFound = true;
+      }
+    });
+
+    if (bookFound) {
+      await category.save();
+    }
+
+    // Adicionar novo registro no histórico do usuário
+    user.downloadHistory.push({ bookId, timestamp: new Date() });
+    await user.save();
+
+    return res.json({
+      success: true,
+      downloadsRemaining: 5 - user.downloadHistory.length
+    });
+  } catch (error: any) {
+    return res.status(500).json({ message: 'Erro ao processar download', error: error.message });
+  }
+});
+
 export default router;
