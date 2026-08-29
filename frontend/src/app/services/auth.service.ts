@@ -9,16 +9,17 @@ import { Observable, tap } from 'rxjs';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  //private apiUrl = 'http://localhost:3000/api/auth';
   private apiUrl = 'https://biblioteca-digital-ak-o-ka-2026.onrender.com/api/auth';
 
   isLoggedIn = signal<boolean>(!!localStorage.getItem('admin_token'));
 
-  // Alterado de username para email para corresponder ao backend
-  login(credentials: { email: string; password: string }): Observable<{ token: string; message: string }> {
-    return this.http.post<{ token: string; message: string }>(`${this.apiUrl}/login`, credentials).pipe(
+  login(credentials: { email: string; password: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
       tap(res => {
         localStorage.setItem('admin_token', res.token);
+        if (res.user) {
+          localStorage.setItem('user_data', JSON.stringify(res.user));
+        }
         this.isLoggedIn.set(true);
       })
     );
@@ -30,11 +31,28 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('admin_token');
+    localStorage.removeItem('user_data');
     this.isLoggedIn.set(false);
     this.router.navigate(['/login']);
   }
 
   getToken(): string | null {
     return localStorage.getItem('admin_token');
+  }
+
+  getUserData(): any {
+    const data = localStorage.getItem('user_data');
+    return data ? JSON.parse(data) : null;
+  }
+
+  getUserFirstName(): string {
+    const user = this.getUserData();
+    if (!user || !user.name) return 'Usuário';
+    return user.name.split(' ')[0]; // Retorna apenas o primeiro nome
+  }
+
+  isAdmin(): boolean {
+    const user = this.getUserData();
+    return user && user.role === 'admin';
   }
 }

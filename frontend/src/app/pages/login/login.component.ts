@@ -208,11 +208,15 @@ export class LoginComponent {
     this.successMessage.set(null);
 
     if (this.isLoginMode()) {
-      // Enviando como { email, password } para o backend mapear corretamente
       this.authService.login({ email: this.username, password: this.password }).subscribe({
-        next: () => {
+        next: (res) => {
           this.loading.set(false);
-          this.router.navigate(['/admin']);
+          // Redirecionamento condicional baseado no perfil
+          if (res.user?.role === 'admin') {
+            this.router.navigate(['/admin']);
+          } else {
+            this.router.navigate(['/']);
+          }
         },
         error: (err) => {
           this.loading.set(false);
@@ -227,8 +231,12 @@ export class LoginComponent {
           
           setTimeout(() => {
             this.authService.login({ email: this.username, password: this.password }).subscribe({
-              next: () => {
-                this.router.navigate(['/admin']);
+              next: (res) => {
+                if (res.user?.role === 'admin') {
+                  this.router.navigate(['/admin']);
+                } else {
+                  this.router.navigate(['/']);
+                }
               },
               error: () => {
                 this.setMode(true);

@@ -14,15 +14,23 @@
       
       <div class="ms-auto d-flex align-items-center gap-2">
         @if (authService.isLoggedIn()) {
-          <a routerLink="/admin" class="btn btn-outline-light btn-sm rounded-pill px-3">
-            <i class="bi bi-shield-lock me-1"></i> Admin
-          </a>
+          @if (authService.isAdmin()) {
+            <!-- Visível apenas para Administradores -->
+            <a routerLink="/admin" class="btn btn-outline-light btn-sm rounded-pill px-3">
+              <i class="bi bi-shield-lock me-1"></i> {{ authService.getUserFirstName() }}
+            </a>
+          } @else {
+            <!-- Saudação para Leitores Comuns -->
+            <span class="text-white small fw-semibold px-2">
+              <i class="bi bi-person-circle me-1"></i> Olá, {{ authService.getUserFirstName() }}
+            </span>
+          }
           <button (click)="authService.logout()" class="btn btn-danger btn-sm rounded-pill px-3">
             <i class="bi bi-box-arrow-right"></i> Sair
           </button>
         } @else {
           <a routerLink="/login" class="btn btn-outline-secondary btn-sm rounded-pill px-3 text-white border-secondary">
-            <i class="bi bi-lock me-1"></i> Admin
+            <i class="bi bi-lock me-1"></i> Entrar / Cadastrar
           </a>
         }
       </div>
@@ -65,11 +73,13 @@
                 <i class="bi bi-chevron-right fs-7 me-1"></i> Início / Categorias
               </a>
             </li>
-            <li>
-              <a routerLink="/admin" class="text-secondary text-decoration-none hover-white">
-                <i class="bi bi-chevron-right fs-7 me-1"></i> Painel do Administrador
-              </a>
-            </li>
+            @if (authService.isAdmin()) {
+              <li>
+                <a routerLink="/admin" class="text-secondary text-decoration-none hover-white">
+                  <i class="bi bi-chevron-right fs-7 me-1"></i> Painel do Administrador
+                </a>
+              </li>
+            }
             <li>
               <a routerLink="/login" class="text-secondary text-decoration-none hover-white">
                 <i class="bi bi-chevron-right fs-7 me-1"></i> Área de Acesso
