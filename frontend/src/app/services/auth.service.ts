@@ -14,7 +14,8 @@ export class AuthService {
 
   isLoggedIn = signal<boolean>(!!localStorage.getItem('admin_token'));
 
-  login(credentials: { username: string; password: string }): Observable<{ token: string; message: string }> {
+  // Alterado de username para email para corresponder ao backend
+  login(credentials: { email: string; password: string }): Observable<{ token: string; message: string }> {
     return this.http.post<{ token: string; message: string }>(`${this.apiUrl}/login`, credentials).pipe(
       tap(res => {
         localStorage.setItem('admin_token', res.token);

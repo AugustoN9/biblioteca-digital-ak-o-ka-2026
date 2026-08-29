@@ -98,17 +98,17 @@ import { AuthService } from '../../services/auth.service';
               </div>
             }
 
-            <!-- Campo Usuário / E-mail -->
+            <!-- Campo E-mail -->
             <div class="mb-3">
-              <label class="form-label text-muted fw-bold small text-uppercase">Usuário ou E-mail</label>
+              <label class="form-label text-muted fw-bold small text-uppercase">E-mail</label>
               <div class="input-group shadow-sm rounded-pill overflow-hidden border">
                 <span class="input-group-text bg-white border-0 text-muted ps-3"><i class="bi bi-person"></i></span>
                 <input
-                  type="text"
+                  type="email"
                   class="form-control border-0 py-2 shadow-none"
                   [(ngModel)]="username"
                   name="username"
-                  placeholder="admin ou seu e-mail"
+                  placeholder="seu-email@exemplo.com"
                   required
                 />
               </div>
@@ -208,7 +208,8 @@ export class LoginComponent {
     this.successMessage.set(null);
 
     if (this.isLoginMode()) {
-      this.authService.login({ username: this.username, password: this.password }).subscribe({
+      // Enviando como { email, password } para o backend mapear corretamente
+      this.authService.login({ email: this.username, password: this.password }).subscribe({
         next: () => {
           this.loading.set(false);
           this.router.navigate(['/admin']);
@@ -219,15 +220,13 @@ export class LoginComponent {
         },
       });
     } else {
-      // Chamada real para cadastrar o usuário no backend
       this.authService.register({ name: this.name, email: this.username, password: this.password }).subscribe({
         next: () => {
           this.loading.set(false);
           this.successMessage.set('Conta criada com sucesso! Realizando login...');
           
-          // Efetua o login automático logo após o registro bem-sucedido
           setTimeout(() => {
-            this.authService.login({ username: this.username, password: this.password }).subscribe({
+            this.authService.login({ email: this.username, password: this.password }).subscribe({
               next: () => {
                 this.router.navigate(['/admin']);
               },
