@@ -1,8 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CategoryService } from '../../services/category.service';
+import { AuthService } from '../../services/auth.service';
 import { CategorySummary, SearchBookResult, Book } from '../../models/category.model';
 import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
 
@@ -354,16 +355,26 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
                     >
                       <i class="bi bi-eye me-1"></i> Ler Online
                     </button>
-                    <a
-                      [href]="
-                        'https://drive.google.com/uc?export=download&id=' +
-                        detailBook()?.driveFileId
-                      "
-                      target="_blank"
-                      class="btn btn-primary flex-fill fw-semibold"
-                    >
-                      <i class="bi bi-download me-1"></i> Baixar PDF
-                    </a>
+
+                    @if (authService.isLoggedIn()) {
+                      <a
+                        [href]="
+                          'https://drive.google.com/uc?export=download&id=' +
+                          detailBook()?.driveFileId
+                        "
+                        target="_blank"
+                        class="btn btn-primary flex-fill fw-semibold"
+                      >
+                        <i class="bi bi-download me-1"></i> Baixar PDF
+                      </a>
+                    } @else {
+                      <button
+                        class="btn btn-secondary flex-fill fw-semibold"
+                        (click)="onRestrictedDownload()"
+                      >
+                        <i class="bi bi-lock-fill me-1"></i> Baixar PDF
+                      </button>
+                    }
                   </div>
                 </div>
               </div>
@@ -403,6 +414,33 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
                 class="border-0"
               >
               </iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Modal customizado de aviso de restrição -->
+    @if (showRestrictedModal()) {
+      <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.6); z-index: 1070;">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+          <div class="modal-content rounded-4 border-0 shadow text-center p-3">
+            <div class="modal-body">
+              <div class="text-warning mb-3">
+                <i class="bi bi-exclamation-triangle-fill display-4"></i>
+              </div>
+              <h5 class="fw-bold mb-2">Acesso Restrito</h5>
+              <p class="text-muted small mb-4">
+                Somente usuário logado pode realizar o download deste PDF!
+              </p>
+              <div class="d-flex flex-column gap-2">
+                <button class="btn btn-primary btn-sm rounded-pill py-2" (click)="goToLogin()">
+                  <i class="bi bi-box-arrow-in-right me-1"></i> Fazer Login
+                </button>
+                <button class="btn btn-light btn-sm rounded-pill py-2 text-muted" (click)="showRestrictedModal.set(false)">
+                  Fechar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -473,6 +511,8 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
 })
 export class HomeComponent implements OnInit {
   private categoryService = inject(CategoryService);
+  public authService = inject(AuthService);
+  private router = inject(Router);
   private searchTimeout: any = null;
 
   categories = signal<CategorySummary[]>([]);
@@ -480,22 +520,32 @@ export class HomeComponent implements OnInit {
   loading = signal<boolean>(true);
   errorMessage = signal<string | null>(null);
 
-  // Busca
+  // Controle de estados
   searchQuery = '';
   searchResults = signal<SearchBookResult[]>([]);
   isSearching = signal<boolean>(false);
   detailBook = signal<SearchBookResult | null>(null);
   selectedBook = signal<Book | null>(null);
+  showRestrictedModal = signal<boolean>(false);
 
   ngOnInit() {
     this.loadCategories();
     this.loadTopBooks();
   }
 
+  onRestrictedDownload() {
+    this.showRestrictedModal.set(true);
+  }
+
+  goToLogin() {
+    this.showRestrictedModal.set(false);
+    this.detailBook.set(null); // Fecha o modal de detalhes do livro
+    this.router.navigate(['/login']);
+  }
+
   onSearchInput() {
     const q = this.searchQuery.trim();
 
-    // Limpa o temporizador anterior para cancelar a busca da tecla passada
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
@@ -508,7 +558,6 @@ export class HomeComponent implements OnInit {
 
     this.isSearching.set(true);
 
-    // Só executa a chamada HTTP após 350ms sem novas digitações
     this.searchTimeout = setTimeout(() => {
       this.categoryService.searchBooks(q).subscribe({
         next: (data) => {
