@@ -9,6 +9,31 @@ const router = Router();
 // 1. ROTAS ESPECÍFICAS / ESTÁTICAS (DEVEM VIR SEMPRE ANTES DE /:slug OU /:id)
 // ============================================================================
 
+// GET /api/categories/stats/total-books - Retorna o total geral de livros considerando os 3 níveis
+router.get('/stats/total-books', async (req, res) => {
+  try {
+    const categories = await Category.find({});
+    let totalBooks = 0;
+
+    categories.forEach((cat: any) => {
+      (cat.subcategories || []).forEach((sub: any) => {
+        // Nível 2 (Livros diretos da subcategoria)
+        totalBooks += (sub.books || []).length;
+
+        // Nível 3 (Subcategorias filhas)
+        (sub.subcategories || []).forEach((child: any) => {
+          totalBooks += (child.books || []).length;
+        });
+      });
+    });
+
+    return res.json({ totalBooks });
+  } catch (error: any) {
+    console.error('Erro ao calcular total de livros:', error);
+    return res.status(500).json({ message: 'Erro ao calcular total de livros', error: error.message });
+  }
+});
+
 // GET /api/categories/books/top-liked
 router.get('/books/top-liked', async (req, res) => {
   try {
@@ -40,7 +65,7 @@ router.get('/books/top-liked', async (req, res) => {
               categoryName: cat.name,
               categorySlug: cat.slug,
               subcategoryName: child.name,
-              subcategorySlug: sub.slug
+              subcategorySlug: child.slug
             });
           });
         });
