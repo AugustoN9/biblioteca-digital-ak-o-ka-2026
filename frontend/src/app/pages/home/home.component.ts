@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -23,7 +23,7 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
         />
         <h1 class="fw-bold display-6">Biblioteca Digital de Livros PDF</h1>
         
-        <!-- Mensagem dinâmica com o total de livros cadastrados no banco -->
+        <!-- Mensagem dinâmica com o total de livros vindo do endpoint dedicado -->
         <p class="text-primary fw-medium fs-5 mb-2">
           <i class="bi bi-collection-fill me-2"></i>Nosso acervo conta com <strong>{{ totalBooksCount() }}</strong> livros digitais.
         </p>
@@ -526,10 +526,8 @@ export class HomeComponent implements OnInit {
   loading = signal<boolean>(true);
   errorMessage = signal<string | null>(null);
 
-  // Computa automaticamente o total somando os livros de cada categoria vinda do banco
-  totalBooksCount = computed(() => {
-    return this.categories().reduce((acc, cat) => acc + (cat.subcategoriesCount || 0), 0);
-  });
+  // Signal para armazenar o total de livros vindo do endpoint dedicado
+  totalBooksCount = signal<number>(0);
 
   // Controle de estados
   searchQuery = '';
@@ -542,7 +540,15 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
     this.loadCategories();
     this.loadTopBooks();
+    this.loadTotalBooksCount();
   }
+
+  loadTotalBooksCount() {
+  this.categoryService.getTotalBooksCount().subscribe({
+    next: (res: { totalBooks: number }) => this.totalBooksCount.set(res.totalBooks),
+    error: (err: any) => console.error('Erro ao buscar total de livros:', err),
+  });
+}
 
   onRestrictedDownload() {
     this.showRestrictedModal.set(true);

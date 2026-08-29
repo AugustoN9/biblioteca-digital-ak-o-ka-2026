@@ -2,11 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Category, CategorySummary, Subcategory, Book, SearchBookResult } from '../models/category.model';
+import {
+  Category,
+  CategorySummary,
+  Subcategory,
+  Book,
+  SearchBookResult,
+} from '../models/category.model';
 import { AuthService } from './auth.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CategoryService {
   private http = inject(HttpClient);
@@ -20,7 +26,7 @@ export class CategoryService {
 
     return new HttpHeaders({
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     });
   }
 
@@ -35,9 +41,9 @@ export class CategoryService {
           gradientBackground: cat.gradientBackground,
           imageUrl: cat.imageUrl,
           iconClass: cat.iconClass,
-          subcategoriesCount: cat.subcategories ? cat.subcategories.length : 0
-        }))
-      )
+          subcategoriesCount: cat.subcategories ? cat.subcategories.length : 0,
+        })),
+      ),
     );
   }
 
@@ -55,7 +61,7 @@ export class CategoryService {
 
   searchBooks(query: string): Observable<SearchBookResult[]> {
     return this.http.get<SearchBookResult[]>(`${this.apiUrl}/books/search`, {
-      params: { q: query }
+      params: { q: query },
     });
   }
 
@@ -72,15 +78,25 @@ export class CategoryService {
   }
 
   createSubcategory(categoryId: string, data: Partial<Subcategory>): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/${categoryId}/subcategories`, data, { headers: this.getAuthHeaders() });
+    return this.http.post<any>(`${this.apiUrl}/${categoryId}/subcategories`, data, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
-  updateSubcategory(categoryId: string, subId: string, data: Partial<Subcategory>): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${categoryId}/subcategories/${subId}`, data, { headers: this.getAuthHeaders() });
+  updateSubcategory(
+    categoryId: string,
+    subId: string,
+    data: Partial<Subcategory>,
+  ): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${categoryId}/subcategories/${subId}`, data, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
   deleteSubcategory(categoryId: string, subId: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${categoryId}/subcategories/${subId}`, { headers: this.getAuthHeaders() });
+    return this.http.delete<any>(`${this.apiUrl}/${categoryId}/subcategories/${subId}`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
   addBook(bookData: {
@@ -105,32 +121,44 @@ export class CategoryService {
       pages: bookData.pages,
       coverUrl: bookData.coverUrl,
       keywords: bookData.keywords || [],
-      likes: 0
+      likes: 0,
     };
 
     return this.http.post<any>(
       `${this.apiUrl}/${bookData.categoryId}/subcategories/${targetSubId}/books`,
       payload,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders() },
     );
   }
 
-  updateBook(categoryId: string, subcategoryId: string, bookId: string, bookData: Partial<Book>): Observable<any> {
+  updateBook(
+    categoryId: string,
+    subcategoryId: string,
+    bookId: string,
+    bookData: Partial<Book>,
+  ): Observable<any> {
     return this.http.put<any>(
       `${this.apiUrl}/${categoryId}/subcategories/${subcategoryId}/books/${bookId}`,
       bookData,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders() },
     );
   }
 
   deleteBook(categoryId: string, subcategoryId: string, bookId: string): Observable<any> {
     return this.http.delete<any>(
       `${this.apiUrl}/${categoryId}/subcategories/${subcategoryId}/books/${bookId}`,
-      { headers: this.getAuthHeaders() }
+      { headers: this.getAuthHeaders() },
     );
   }
 
   likeBook(bookId: string): Observable<{ success: boolean; likes: number }> {
-    return this.http.post<{ success: boolean; likes: number }>(`${this.apiUrl}/books/${bookId}/like`, {});
+    return this.http.post<{ success: boolean; likes: number }>(
+      `${this.apiUrl}/books/${bookId}/like`,
+      {},
+    );
   }
+
+  getTotalBooksCount(): Observable<{ totalBooks: number }> {
+  return this.http.get<{ totalBooks: number }>(`${this.apiUrl}/stats/total-books`);
+}
 }

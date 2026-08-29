@@ -47,4 +47,5 @@ export interface CategorySummary {
   imageUrl?: string;
   iconClass: string;
   subcategoriesCount: number;
+  totalBooks?: number;
 }
