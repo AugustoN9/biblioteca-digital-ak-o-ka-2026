@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -22,6 +22,12 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
           style="max-height: 140px; object-fit: contain; filter: drop-shadow(0 6px 16px rgba(0, 150, 136, 0.25));"
         />
         <h1 class="fw-bold display-6">Biblioteca Digital de Livros PDF</h1>
+        
+        <!-- Mensagem dinâmica com o total de livros cadastrados no banco -->
+        <p class="text-primary fw-medium fs-5 mb-2">
+          <i class="bi bi-collection-fill me-2"></i>Nosso acervo conta com <strong>{{ totalBooksCount() }}</strong> livros digitais.
+        </p>
+
         <p class="text-muted lead fs-6 mb-3">
           Selecione uma categoria para explorar os materiais disponíveis
         </p>
@@ -520,6 +526,11 @@ export class HomeComponent implements OnInit {
   loading = signal<boolean>(true);
   errorMessage = signal<string | null>(null);
 
+  // Computa automaticamente o total somando os livros de cada categoria vinda do banco
+  totalBooksCount = computed(() => {
+    return this.categories().reduce((acc, cat) => acc + (cat.subcategoriesCount || 0), 0);
+  });
+
   // Controle de estados
   searchQuery = '';
   searchResults = signal<SearchBookResult[]>([]);
@@ -539,7 +550,7 @@ export class HomeComponent implements OnInit {
 
   goToLogin() {
     this.showRestrictedModal.set(false);
-    this.detailBook.set(null); // Fecha o modal de detalhes do livro
+    this.detailBook.set(null); 
     this.router.navigate(['/login']);
   }
 
