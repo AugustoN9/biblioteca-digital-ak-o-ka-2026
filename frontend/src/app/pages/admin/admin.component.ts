@@ -718,7 +718,7 @@ import { Category, Subcategory, Book } from '../../models/category.model';
       }
     </div>
 
-    <!-- Modal de Edição de Livro com Troca de Categoria/Subcategoria -->
+    <!-- Modal de Edição de Livro com Suporte a Nível 3 -->
     @if (editingBookData()) {
       <div
         class="modal fade show d-block"
@@ -735,7 +735,7 @@ import { Category, Subcategory, Book } from '../../models/category.model';
               <button type="button" class="btn-close" (click)="editingBookData.set(null)"></button>
             </div>
             <div class="modal-body">
-              <!-- Seletores para mover de Categoria/Subcategoria -->
+              <!-- Seletores para mover de Categoria/Subcategoria/Subtópico -->
               <div class="row g-2 mb-3 bg-light p-3 rounded-3 border">
                 <div class="col-12">
                   <label class="form-label small fw-bold text-dark mb-1"
@@ -761,12 +761,30 @@ import { Category, Subcategory, Book } from '../../models/category.model';
                   <select
                     class="form-select form-select-sm"
                     [(ngModel)]="editingBookData()!.newSubcategoryId"
+                    (change)="onEditSubcategoryChange()"
                   >
                     @for (sub of availableEditSubcategories(); track sub.id) {
                       <option [value]="sub.id">{{ sub.name }}</option>
                     }
                   </select>
                 </div>
+
+                @if (availableEditChildSubcategories().length > 0) {
+                  <div class="col-12 mt-2">
+                    <label class="form-label text-muted" style="font-size: 0.75rem;"
+                      >Especialidade / Subtópico Específico</label
+                    >
+                    <select
+                      class="form-select form-select-sm"
+                      [(ngModel)]="editingBookData()!.newChildSubcategoryId"
+                    >
+                      <option value="">Geral / Nenhum específico</option>
+                      @for (child of availableEditChildSubcategories(); track child.id) {
+                        <option [value]="child.id">{{ child.name }}</option>
+                      }
+                    </select>
+                  </div>
+                }
               </div>
 
               <div class="mb-3">
@@ -865,15 +883,17 @@ export class AdminComponent implements OnInit {
   manageFilterQuery = '';
   availableManageSubcategories = signal<Subcategory[]>([]);
 
-  // Atualizado para suportar movimentação de categoria/subcategoria
+  // Atualizado para suportar o 3º nível (subtópico específico) na edição
   editingBookData = signal<{
     oldCategoryId: string;
     oldSubcategoryId: string;
     newCategoryId: string;
     newSubcategoryId: string;
+    newChildSubcategoryId: string;
     book: Book;
   } | null>(null);
   availableEditSubcategories = signal<Subcategory[]>([]);
+  availableEditChildSubcategories = signal<Subcategory[]>([]);
 
   currentPage = signal<number>(1);
   pageSize = 10;
@@ -1013,14 +1033,12 @@ export class AdminComponent implements OnInit {
   }
 
   resetBookForm() {
-    // Zera os seletores de categoria e subcategorias
     this.bookCategoryId = '';
     this.bookSubcategoryId = '';
     this.bookChildSubcategoryId = '';
     this.availableBookSubcategories.set([]);
     this.availableBookChildSubcategories.set([]);
 
-    // Zera os campos textuais e metadados do livro
     this.bookTitle = '';
     this.bookAuthor = '';
     this.bookDescription = '';
@@ -1031,7 +1049,6 @@ export class AdminComponent implements OnInit {
     this.bookExtractedId.set('');
   }
 
-  // Listagem de livros para gerenciamento com filtros ativos
   // Listagem de livros para gerenciamento com suporte completo aos 3 níveis
   filteredBooksList(): {
     categoryId: string;
@@ -1050,7 +1067,6 @@ export class AdminComponent implements OnInit {
       if (this.manageFilterCategoryId && cat.id !== this.manageFilterCategoryId) return;
 
       (cat.subcategories || []).forEach((sub) => {
-        // Função auxiliar para processar uma lista de livros de um nível
         const processBooks = (booksArray: any[], subName: string, subId: string) => {
           (booksArray || []).forEach((book) => {
             const q = this.manageFilterQuery.toLowerCase().trim();
@@ -1070,22 +1086,18 @@ export class AdminComponent implements OnInit {
           });
         };
 
-        // 1. Verifica se a subcategoria atual atende ao filtro de subcategoria (se houver)
         const matchesSub =
           !this.manageFilterSubcategoryId || sub.id === this.manageFilterSubcategoryId;
 
-        // Se a subcategoria em si corresponde ao filtro, pega os livros diretos dela (Nível 2)
         if (matchesSub) {
           processBooks(sub.books, sub.name, sub.id);
         }
 
-        // 2. Varre também o Nível 3 (Subcategorias filhas / subtópicos, como Linguagem C, Java, etc.)
         if (sub.subcategories && Array.isArray(sub.subcategories)) {
           sub.subcategories.forEach((child) => {
             const matchesChildSub =
               !this.manageFilterSubcategoryId || child.id === this.manageFilterSubcategoryId;
 
-            // Se filtrarmos pela categoria pai ou se o subtópico corresponder ao filtro de subcategoria
             if (matchesSub || matchesChildSub) {
               processBooks(child.books, child.name, child.id);
             }
@@ -1122,13 +1134,38 @@ export class AdminComponent implements OnInit {
     book: Book;
   }) {
     const cat = this.fullCategories().find((c) => c.id === item.categoryId);
-    this.availableEditSubcategories.set(cat ? cat.subcategories : []);
+    const subcategories = cat ? cat.subcategories : [];
+    this.availableEditSubcategories.set(subcategories);
+
+    let foundParentSubId = item.subcategoryId;
+    let foundChildSubId = '';
+    let childList: Subcategory[] = [];
+
+    const directSub = subcategories.find((s) => s.id === item.subcategoryId);
+    if (!directSub) {
+      for (const sub of subcategories) {
+        if (sub.subcategories && Array.isArray(sub.subcategories)) {
+          const childMatch = sub.subcategories.find((c) => c.id === item.subcategoryId);
+          if (childMatch) {
+            foundParentSubId = sub.id;
+            foundChildSubId = item.subcategoryId;
+            childList = sub.subcategories;
+            break;
+          }
+        }
+      }
+    } else {
+      childList = directSub.subcategories || [];
+    }
+
+    this.availableEditChildSubcategories.set(childList);
 
     this.editingBookData.set({
       oldCategoryId: item.categoryId,
       oldSubcategoryId: item.subcategoryId,
       newCategoryId: item.categoryId,
-      newSubcategoryId: item.subcategoryId,
+      newSubcategoryId: foundParentSubId,
+      newChildSubcategoryId: foundChildSubId,
       book: { ...item.book },
     });
   }
@@ -1137,10 +1174,20 @@ export class AdminComponent implements OnInit {
     const data = this.editingBookData();
     if (!data) return;
     const cat = this.fullCategories().find((c) => c.id === data.newCategoryId);
-    this.availableEditSubcategories.set(cat ? cat.subcategories : []);
-    if (cat && cat.subcategories.length > 0) {
-      data.newSubcategoryId = cat.subcategories[0].id;
-    }
+    const subs = cat ? cat.subcategories : [];
+    this.availableEditSubcategories.set(subs);
+
+    data.newSubcategoryId = subs.length > 0 ? subs[0].id : '';
+    this.onEditSubcategoryChange();
+  }
+
+  onEditSubcategoryChange() {
+    const data = this.editingBookData();
+    if (!data) return;
+    const parentSub = this.availableEditSubcategories().find((s) => s.id === data.newSubcategoryId);
+    const children = parentSub?.subcategories || [];
+    this.availableEditChildSubcategories.set(children);
+    data.newChildSubcategoryId = '';
   }
 
   saveEditedBook() {
@@ -1148,11 +1195,11 @@ export class AdminComponent implements OnInit {
     if (!data) return;
     this.isSubmitting.set(true);
 
+    const targetDestinationId = data.newChildSubcategoryId || data.newSubcategoryId;
     const isMoving =
-      data.oldCategoryId !== data.newCategoryId || data.oldSubcategoryId !== data.newSubcategoryId;
+      data.oldCategoryId !== data.newCategoryId || data.oldSubcategoryId !== targetDestinationId;
 
     if (isMoving) {
-      // Move o livro: remove da origem antiga e adiciona no novo destino
       this.categoryService
         .deleteBook(data.oldCategoryId, data.oldSubcategoryId, data.book.id)
         .subscribe({
@@ -1161,6 +1208,7 @@ export class AdminComponent implements OnInit {
               .addBook({
                 categoryId: data.newCategoryId,
                 subcategoryId: data.newSubcategoryId,
+                childSubcategoryId: data.newChildSubcategoryId || undefined,
                 title: data.book.title,
                 author: data.book.author,
                 description: data.book.description,
@@ -1193,7 +1241,6 @@ export class AdminComponent implements OnInit {
           },
         });
     } else {
-      // Apenas atualiza os campos mantendo na mesma subcategoria
       this.categoryService
         .updateBook(data.oldCategoryId, data.oldSubcategoryId, data.book.id, data.book)
         .subscribe({

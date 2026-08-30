@@ -328,7 +328,7 @@ router.post('/:categoryId/subcategories/:subcategoryId/books', authMiddleware, a
   }
 });
 
-// Atualizar livro
+// Atualizar livro (Suportando Nível 2 e Nível 3 / Subcategoria filha)
 router.put('/:categoryId/subcategories/:subcategoryId/books/:bookId', authMiddleware, async (req, res) => {
   try {
     const { categoryId, subcategoryId, bookId } = req.params;
@@ -338,17 +338,34 @@ router.put('/:categoryId/subcategories/:subcategoryId/books/:bookId', authMiddle
       return res.status(404).json({ message: 'Categoria não encontrada' });
     }
 
-    const sub = category.subcategories.find((s: any) => s.id === subcategoryId);
-    if (!sub) {
-      return res.status(404).json({ message: 'Subcategoria não encontrada' });
+    let targetSub = null;
+
+    // 1. Tenta encontrar no Nível 2
+    targetSub = (category.subcategories || []).find((s: any) => s.id === subcategoryId);
+
+    if (!targetSub) {
+      // 2. Se não achou, procura no Nível 3
+      for (const sub of (category.subcategories || [])) {
+        if (sub.subcategories && Array.isArray(sub.subcategories)) {
+          const foundChild = sub.subcategories.find((child: any) => child.id === subcategoryId);
+          if (foundChild) {
+            targetSub = foundChild;
+            break;
+          }
+        }
+      }
     }
 
-    const bookIndex = sub.books.findIndex((b: any) => b.id === bookId);
+    if (!targetSub) {
+      return res.status(404).json({ message: 'Subcategoria ou tópico não encontrado' });
+    }
+
+    const bookIndex = (targetSub.books || []).findIndex((b: any) => b.id === bookId);
     if (bookIndex === -1) {
       return res.status(404).json({ message: 'Livro não encontrado' });
     }
 
-    sub.books[bookIndex] = { ...sub.books[bookIndex], ...req.body };
+    targetSub.books[bookIndex] = { ...targetSub.books[bookIndex], ...req.body };
     await category.save();
     return res.json(category);
   } catch (error: any) {
@@ -356,7 +373,7 @@ router.put('/:categoryId/subcategories/:subcategoryId/books/:bookId', authMiddle
   }
 });
 
-// Deletar livro
+// Deletar livro (Suportando Nível 2 e Nível 3 / Subcategoria filha)
 router.delete('/:categoryId/subcategories/:subcategoryId/books/:bookId', authMiddleware, async (req, res) => {
   try {
     const { categoryId, subcategoryId, bookId } = req.params;
@@ -366,12 +383,29 @@ router.delete('/:categoryId/subcategories/:subcategoryId/books/:bookId', authMid
       return res.status(404).json({ message: 'Categoria não encontrada' });
     }
 
-    const sub = category.subcategories.find((s: any) => s.id === subcategoryId);
-    if (!sub) {
-      return res.status(404).json({ message: 'Subcategoria não encontrada' });
+    let targetSub = null;
+
+    // 1. Tenta encontrar no Nível 2
+    targetSub = (category.subcategories || []).find((s: any) => s.id === subcategoryId);
+
+    if (!targetSub) {
+      // 2. Se não achou, procura no Nível 3
+      for (const sub of (category.subcategories || [])) {
+        if (sub.subcategories && Array.isArray(sub.subcategories)) {
+          const foundChild = sub.subcategories.find((child: any) => child.id === subcategoryId);
+          if (foundChild) {
+            targetSub = foundChild;
+            break;
+          }
+        }
+      }
     }
 
-    (sub.books as any) = sub.books.filter((b: any) => b.id !== bookId);
+    if (!targetSub) {
+      return res.status(404).json({ message: 'Subcategoria ou tópico não encontrado' });
+    }
+
+    targetSub.books = (targetSub.books || []).filter((b: any) => b.id !== bookId);
     await category.save();
     return res.json(category);
   } catch (error: any) {
