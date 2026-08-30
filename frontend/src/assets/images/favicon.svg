@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Fundo opcional arredondado (pode remover se quiser fundo transparente) -->
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+  
+  <!-- Corpo do Livro / Ícone Minimalista -->
+  <path d="M16 16C16 13.7909 17.7909 12 20 12H48C50.2091 12 52 13.7909 52 16V46C52 48.2091 50.2091 50 48 50H20C17.7909 50 16 48.2091 16 46V16Z" fill="#ffffff"/>
+  
+  <!-- Detalhe da lombada/páginas na base -->
+  <path d="M22 42H46V45C46 46.1046 45.1046 47 44 47H24C22.8954 47 22 46.1046 22 45V42Z" fill="#0f172a"/>
+  
+  <!-- Marcador de página (fita) estilizado -->
+  <path d="M28 16H36V28L32 25L28 28V16Z" fill="#3b82f6"/>
+</svg>

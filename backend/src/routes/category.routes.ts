@@ -282,7 +282,7 @@ router.delete('/:categoryId/subcategories/:subId', authMiddleware, async (req, r
   }
 });
 
-// Adicionar livro a uma subcategoria
+// Adicionar livro a uma subcategoria (Suportando Nível 2 e Nível 3 / Subcategoria filha)
 router.post('/:categoryId/subcategories/:subcategoryId/books', authMiddleware, async (req, res) => {
   try {
     const { categoryId, subcategoryId } = req.params;
@@ -292,15 +292,38 @@ router.post('/:categoryId/subcategories/:subcategoryId/books', authMiddleware, a
       return res.status(404).json({ message: 'Categoria não encontrada' });
     }
 
-    const sub = category.subcategories.find((s: any) => s.id === subcategoryId);
-    if (!sub) {
-      return res.status(404).json({ message: 'Subcategoria não encontrada' });
+    let targetSub = null;
+
+    // 1. Tenta encontrar no Nível 2 (subcategorias diretas)
+    targetSub = (category.subcategories || []).find((s: any) => s.id === subcategoryId);
+
+    if (!targetSub) {
+      // 2. Se não achou, procura no Nível 3 (subcategorias filhas / tópicos específicos)
+      for (const sub of (category.subcategories || [])) {
+        if (sub.subcategories && Array.isArray(sub.subcategories)) {
+          const foundChild = sub.subcategories.find((child: any) => child.id === subcategoryId);
+          if (foundChild) {
+            targetSub = foundChild;
+            break;
+          }
+        }
+      }
     }
 
-    sub.books.push(req.body);
+    if (!targetSub) {
+      return res.status(404).json({ message: 'Subcategoria ou tópico não encontrado' });
+    }
+
+    // Garante que o array de livros existe na subcategoria alvo
+    if (!targetSub.books) {
+      targetSub.books = [];
+    }
+
+    targetSub.books.push(req.body);
     await category.save();
     return res.status(201).json(category);
   } catch (error: any) {
+    console.error('Erro ao adicionar livro:', error);
     return res.status(400).json({ message: 'Erro ao adicionar livro', error: error.message });
   }
 });

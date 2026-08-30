@@ -727,6 +727,14 @@ export class AdminComponent implements OnInit {
   }
 
   resetBookForm() {
+    // Zera os seletores de categoria e subcategorias
+    this.bookCategoryId = '';
+    this.bookSubcategoryId = '';
+    this.bookChildSubcategoryId = '';
+    this.availableBookSubcategories.set([]);
+    this.availableBookChildSubcategories.set([]);
+
+    // Zera os campos textuais e metadados do livro
     this.bookTitle = '';
     this.bookAuthor = '';
     this.bookDescription = '';
